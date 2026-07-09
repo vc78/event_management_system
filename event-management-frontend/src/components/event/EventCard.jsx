@@ -29,10 +29,40 @@ export default function EventCard({ event }) {
     badgeLabel = 'Selling fast';
   }
 
-  // Fallback image banner based on category or index if bannerUrl is empty
-  const defaultBanner = event.bannerUrl && !event.bannerUrl.includes('example.com')
+  // Category-based creative thumbnails using Unsplash (always reliable, always relevant)
+  const CATEGORY_IMAGES = {
+    'music':       'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=400&fit=crop&auto=format',
+    'technology':  'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop&auto=format',
+    'tech':        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop&auto=format',
+    'sports':      'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&h=400&fit=crop&auto=format',
+    'art':         'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=400&fit=crop&auto=format',
+    'food':        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop&auto=format',
+    'business':    'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600&h=400&fit=crop&auto=format',
+    'education':   'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&h=400&fit=crop&auto=format',
+    'health':      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop&auto=format',
+    'comedy':      'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=600&h=400&fit=crop&auto=format',
+    'drama':       'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&h=400&fit=crop&auto=format',
+    'cultural':    'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&h=400&fit=crop&auto=format',
+    'conference':  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop&auto=format',
+    'workshop':    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&h=400&fit=crop&auto=format',
+    'festival':    'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&h=400&fit=crop&auto=format',
+    'networking':  'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&h=400&fit=crop&auto=format',
+  };
+
+  const getCategoryImage = () => {
+    const cat = (event.categoryName || '').toLowerCase().trim();
+    for (const key of Object.keys(CATEGORY_IMAGES)) {
+      if (cat.includes(key)) return CATEGORY_IMAGES[key];
+    }
+    // Deterministic fallback using event ID so each event has a unique stable image
+    const seeds = ['photo-1540575467063-178a50c2df87','photo-1493225457124-a3eb161ffa5f','photo-1559136555-9303baea8ebd','photo-1506157786151-b8491531f063','photo-1511795409834-ef04bbd61622'];
+    const idx = (event.id || 0) % seeds.length;
+    return `https://images.unsplash.com/${seeds[idx]}?w=600&h=400&fit=crop&auto=format`;
+  };
+
+  const defaultBanner = (event.bannerUrl && event.bannerUrl.startsWith('http') && !event.bannerUrl.includes('example.com'))
     ? event.bannerUrl
-    : `https://picsum.photos/seed/${event.id}/600/400`;
+    : getCategoryImage();
 
   return (
     <Link 
