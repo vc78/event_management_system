@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend (Vite + React) ###
+event-management-frontend/node_modules/
+event-management-frontend/dist/
+event-management-frontend/.env
+event-management-frontend/.env.local
+event-management-frontend/.env.*.local
