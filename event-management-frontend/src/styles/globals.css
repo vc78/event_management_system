@@ -64,27 +64,60 @@ button {
 }
 
 /* Marquee Header */
-.marquee {
+.marquee-container {
+  position: relative;
+  width: 100%;
   background: var(--ink);
   border-bottom: 1px solid var(--line);
   overflow: hidden;
+}
+
+.marquee-fade-left, .marquee-fade-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.marquee-fade-left {
+  left: 0;
+  background: linear-gradient(to right, var(--ink) 0%, transparent 100%);
+}
+
+.marquee-fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--ink) 0%, transparent 100%);
+}
+
+.marquee {
+  overflow: hidden;
   white-space: nowrap;
-  padding: 9px 0;
+  padding: 12px 0;
   width: 100%;
 }
 
 .marquee-track {
   display: inline-block;
-  animation: scroll 22s linear infinite;
+  animation: scroll 35s linear infinite;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   color: var(--paper-dim);
+  text-shadow: 0 0 10px rgba(255, 184, 77, 0.1);
+  will-change: transform;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
 }
 
 .marquee-track span {
   color: var(--magenta);
   padding: 0 10px;
+  text-shadow: 0 0 12px rgba(255, 61, 122, 0.4);
 }
 
 @keyframes scroll {

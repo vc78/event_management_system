@@ -37,11 +37,16 @@ export default function Marquee() {
   const line = items.map(t => `${t}`).join('   ◆   ');
 
   return (
-    <div className="marquee">
-      <div className="marquee-track">
-        <span>◆ {line} ◆</span>
-        <span>   ◆ {line} ◆</span>
+    <div className="marquee-container">
+      <div className="marquee-fade-left"></div>
+      <div className="marquee">
+        <div className="marquee-track">
+          <span>◆ {line} ◆</span>
+          <span>   ◆ {line} ◆</span>
+          <span>   ◆ {line} ◆</span>
+        </div>
       </div>
+      <div className="marquee-fade-right"></div>
     </div>
   );
 }
