@@ -1175,3 +1175,30 @@ button {
     display: none;
   }
 }
+/* Innovative Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--stage);
+  border-left: 1px solid var(--line);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 184, 77, 0.3);
+  border-radius: 10px;
+  border: 2px solid var(--stage);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--amber);
+}
+
+/* Ensure horizontal scrollbars (like on tables) also look great */
+.table-wrap::-webkit-scrollbar-track {
+  border-left: none;
+  border-top: 1px solid var(--line);
+}
