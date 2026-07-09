@@ -1,0 +1,1 @@
+export default function EmptyState({title,description,actionLabel,onAction}){ return <div className='card p-8 text-center'><h3 className='section-title'>{title}</h3><p className='muted mt-2'>{description}</p>{actionLabel&&<button className='btn-primary mt-4' onClick={onAction}>{actionLabel}</button>}</div>; }

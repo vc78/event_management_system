@@ -1,0 +1,1 @@
+import axiosInstance from './axiosInstance.js'; export const login=(p)=>axiosInstance.post('/auth/login',p).then(r=>r.data); export const register=(p)=>axiosInstance.post('/auth/register',p).then(r=>r.data);

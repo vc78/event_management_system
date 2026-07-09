@@ -1,0 +1,1 @@
+import { Link } from 'react-router-dom'; export default function AppLogo(){ return <Link to='/' className='logo-wrap'><span className='logo-mark'>M</span><div><div className='logo-title'>Marquee</div><div className='logo-sub'>Event Management</div></div></Link>; }

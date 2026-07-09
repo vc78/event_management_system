@@ -1,0 +1,1 @@
+export const formatDate=(d)=>d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'; export const formatDateBadge=(dt)=>{ if(!dt) return {day:'--',month:'---'}; const d=new Date(dt); return { day:d.toLocaleDateString('en-IN',{day:'2-digit'}), month:d.toLocaleDateString('en-IN',{month:'short'}).toUpperCase() }; };

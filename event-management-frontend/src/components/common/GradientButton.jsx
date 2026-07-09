@@ -1,0 +1,1 @@
+export default function GradientButton({children,className='',isLoading=false,fullWidth=false,...props}){ return <button {...props} disabled={isLoading||props.disabled} className={`btn-primary ${fullWidth?'w-full':''} ${className}`}>{isLoading?'Please wait...':children}</button>; }

@@ -1,0 +1,1 @@
+export default function LoadingSpinner({label='Loading...',fullScreen=false}){ return <div className={fullScreen?'center-screen':'py-10 text-center'}><div className='spinner'/><p className='muted mt-3'>{label}</p></div>; }
