@@ -1,0 +1,79 @@
+<USER_REQUEST>
+# Master Prompt: Real-Time & Data-Accuracy Hardening for Event Management System
+
+Paste this whole document into Antigravity as your task brief. It is written to be
+executed end-to-end by an agentic coding tool against the existing codebase —
+it assumes the current project structure and does not ask you to redesign it.
+
+---
+
+## 0. Project Context (do not change without reason)
+
+**Backend:** Spring Boot 3, Java 21, MySQL, Spring Security + JWT, Maven.
+Base package: `com.ems.event_management_system`. Key packages: `controller`,
+`service`/`service.impl`, `repository`, `entity`, `dto.request`/`dto.response`,
+`security`, `config`, `exception`, `enums`.
+
+Core entities: `User`, `Role` (ADMIN/USER/ORGANIZER), `Category`, `Venue`,
+`Event` (fields: `eventTitle`, `eventDate`, `startTime`, `endTime`,
+`ticketPrice`, `totalSeats`, `availableSeats`, `eventStatus`
+[UPCOMING/ONGOING/COMPLETED/CANCELLED], `categoryId`, `venueId`,
+`organizerId`), `Booking` (`numberOfTickets`, `totalAmount`, `bookingTime`,
+`bookingStatus` [CONFIRMED/CANCELLED/PENDING], `paymentStatus`, `userId`,
+`eventId`).
+
+REST API is under `/api`: `/api/auth/*`, `/api/categories`, `/api/venues`,
+`/api/events`, `/api/bookings`, `/api/admin/dashboard`. Auth is stateless JWT
+(`Authorization: Bearer <token>`).
+
+**Frontend:** React + Vite, `axios` via `src/api/axiosInstance.js`, routing
+with `react-router-dom`, `AuthContext` for session state, `react-hot-toast`
+for notifications, Tailwind-style utility classes (`input-field`,
+`label-text`, `card`, etc.). Pages split into `pages/public/*` (browsing,
+booking, my-bookings) and `pages/dashboard/*` (admin/organizer: events,
+venues, categories, bookings, dashboard stats).
+
+**Known constraints:**
+- Bookings are always created as `CONFIRMED` server-side (no pending-approval
+  workflow exists yet).
+- `/api/admin/dashboard` requires `ROLE_ADMIN`.
+- `POST /api/bookings` is intentionally public at the security layer, but the
+  frontend requires a logged-in user ID to build t
+<truncated 11489 bytes>
+thout any manual action.
+- [ ] Every page in `pages/public` and `pages/dashboard` has explicit
+      loading/empty/error states.
+- [ ] No component reads server data through anything other than the React
+      Query layer; no leftover ad-hoc `useEffect` fetches.
+- [ ] WebSocket connection is authenticated, reconnects on drop, and never
+      leaks one user's booking data to another user's subscription.
+- [ ] All currency/date rendering goes through the shared formatter utilities.
+
+---
+
+## 6. Suggested Execution Order
+
+1. §2.1 seat race fix + test → 2. §2.3 validation parity → 3. §2.2 scheduler
+→ 4. §2.4 WebSocket backend → 5. §3.1 React Query migration (can start in
+parallel with step 4) → 6. §3.2 WebSocket client → 7. §3.3 wire pages one by
+one, verifying each against the Definition of Done before moving to the next
+→ 8. §3.4 sweep for remaining accuracy/formatting issues.
+
+Work backend-first per section; do not wire a frontend live-update to a
+backend guarantee that hasn't been fixed yet, or you'll just be displaying
+the race condition in real time instead of fixing it.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-10T20:57:50+05:30.
+
+The user's current state is as follows:
+Active Document: c:\Training\event_management_system\event-management-frontend\vercel.json (LANGUAGE_JSON)
+Cursor is on line: 1
+Other open documents:
+- c:\Training\event_management_system\event-management-frontend\src\pages\dashboard\EventsPage.jsx (LANGUAGE_JAVASCRIPT)
+- c:\Training\event_management_system\event-management-frontend\src\components\event\EventCard.jsx (LANGUAGE_JAVASCRIPT)
+- c:\Training\event_management_system\src\main\java\com\ems\event_management_system\enums\EventStatus.java (LANGUAGE_JAVA)
+- c:\Training\event_management_system\event-management-frontend\.env.local (LANGUAGE_UNSPECIFIED)
+- c:\Training\event_management_system\event-management-frontend\src\api\axiosInstance.js (LANGUAGE_JAVASCRIPT)
+No browser pages are currently open.
+</ADDITIONAL_METADATA>

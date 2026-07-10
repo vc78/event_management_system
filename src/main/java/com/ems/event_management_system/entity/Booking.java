@@ -20,6 +20,9 @@ public class Booking extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "token_id", unique = true)
+    private String tokenId;
+
     @Column(name = "number_of_tickets", nullable = false)
     private Integer numberOfTickets;
 

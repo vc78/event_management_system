@@ -17,7 +17,10 @@ export default function EventCard({ event }) {
   let badgeLabel = 'Just opened';
   let showPulse = false;
 
-  if (availableSeats <= 0) {
+  if (event.eventStatus === 'CANCELLED') {
+    badgeClass = 'soldout'; // reuse grey styles or create a new one, let's just use grey text style
+    badgeLabel = 'Cancelled';
+  } else if (availableSeats <= 0) {
     badgeClass = 'soldout';
     badgeLabel = 'Sold out';
   } else if (event.eventStatus === 'LIVE') {
@@ -28,6 +31,8 @@ export default function EventCard({ event }) {
     badgeClass = 'selling';
     badgeLabel = 'Selling fast';
   }
+
+  const isCancelled = event.eventStatus === 'CANCELLED';
 
   // Category-based creative thumbnails using Unsplash (always reliable, always relevant)
   const CATEGORY_IMAGES = {
@@ -68,6 +73,7 @@ export default function EventCard({ event }) {
     <Link 
       to={`/events/${event.id}`} 
       className="event-card-modern"
+      style={isCancelled ? { filter: 'grayscale(100%)', opacity: 0.6 } : {}}
       ref={cardRef}
     >
       {/* Banner image wrapper */}

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as eventApi from '../../api/eventApi.js';
 import * as categoryApi from '../../api/categoryApi.js';
 import * as venueApi from '../../api/venueApi.js';
@@ -8,14 +9,12 @@ import { formatCurrency } from '../../utils/formatCurrency.js';
 import { Plus, Edit2, Trash2, X, Download } from 'lucide-react';
 import { exportToCSV } from '../../utils/csvExport.js';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
+import { useRealtimeEventsList } from '../../hooks/useRealtime.js';
 
 export default function EventsPage() {
   const { user } = useAuth();
   const toast = useToast();
-  const [events, setEvents] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [venues, setVenues] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
 
   // Modal State
@@ -36,27 +35,24 @@ export default function EventsPage() {
     organizerId: ''
   });
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [e, c, v] = await Promise.all([
-        eventApi.getEvents(),
-        categoryApi.getCategories(),
-        venueApi.getVenues()
-      ]);
-      setEvents(e);
-      setCategories(c);
-      setVenues(v);
-    } catch (err) {
-      toast.error('Failed to load events data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: events = [], isLoading: eventsLoading, isError: isEventsError } = useQuery({
+    queryKey: ['events'],
+    queryFn: eventApi.getEvents
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: categories = [], isLoading: catLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryApi.getCategories
+  });
+
+  const { data: venues = [], isLoading: venLoading } = useQuery({
+    queryKey: ['venues'],
+    queryFn: venueApi.getVenues
+  });
+
+  const loading = eventsLoading || catLoading || venLoading;
+  
+  useRealtimeEventsList();
 
   const openCreateModal = () => {
     setEditingId(null);
@@ -127,7 +123,7 @@ export default function EventsPage() {
         toast.success('Event created successfully');
       }
       setShowModal(false);
-      fetchData();
+      queryClient.invalidateQueries(['events']);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to save event');
     } finally {
@@ -140,7 +136,7 @@ export default function EventsPage() {
     try {
       await eventApi.deleteEvent(id);
       toast.success('Event deleted successfully');
-      fetchData();
+      queryClient.invalidateQueries(['events']);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to delete event');
     }
@@ -167,6 +163,7 @@ export default function EventsPage() {
   };
 
   if (loading) return <LoadingSpinner label="Loading events..." />;
+  if (isEventsError) return <div className="center-screen"><p className="text-danger">Failed to load events data.</p></div>;
 
   return (
     <div>

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as bookingApi from '../../api/bookingApi.js';
 import { useToast } from '../../hooks/useToast.js';
 import { formatCurrency } from '../../utils/formatCurrency.js';
@@ -9,31 +10,19 @@ import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
 export default function BookingsPage() {
   const toast = useToast();
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchBookings = async () => {
-    setLoading(true);
-    try {
-      const data = await bookingApi.getBookings();
-      setBookings(data);
-    } catch (err) {
-      toast.error('Failed to load bookings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  const { data: bookings = [], isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['bookings', 'all'],
+    queryFn: bookingApi.getBookings
+  });
 
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking? This will refund tickets and free up the seats.')) return;
     try {
       await bookingApi.cancelBooking(bookingId);
       toast.success('Booking cancelled successfully');
-      fetchBookings();
+      queryClient.invalidateQueries(['bookings', 'all']);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to cancel booking');
     }
@@ -50,6 +39,7 @@ export default function BookingsPage() {
       TicketsBooked: b.numberOfTickets,
       TotalAmountPaid: b.totalAmount,
       BookingDate: b.bookingTime,
+      TokenId: b.tokenId,
       Status: b.bookingStatus
     }));
     exportToCSV(clean, 'Bookings_Telemetry_Report.csv');
@@ -57,6 +47,12 @@ export default function BookingsPage() {
   };
 
   if (loading) return <LoadingSpinner label="Loading bookings..." />;
+  if (isError) return (
+    <div className="center-screen" style={{ flexDirection: 'column', gap: '1rem' }}>
+      <p className="text-danger">Failed to load bookings: {error?.message}</p>
+      <button onClick={() => refetch()} className="btn btn-primary">Retry</button>
+    </div>
+  );
 
   return (
     <div>
@@ -80,6 +76,7 @@ export default function BookingsPage() {
               <th>Tickets</th>
               <th>Total Amount</th>
               <th>Booking Date</th>
+              <th>Token ID</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -96,6 +93,7 @@ export default function BookingsPage() {
                 <td>{b.numberOfTickets} seats</td>
                 <td style={{ fontWeight: 600 }}>{formatCurrency(b.totalAmount || 0)}</td>
                 <td>{formatDate(b.bookingTime)}</td>
+                <td><code style={{ fontSize: '11px', background: 'var(--stage-2)', padding: '2px 4px' }}>{b.tokenId || 'N/A'}</code></td>
                 <td>
                   <span className={`status-chip ${b.bookingStatus?.toLowerCase()}`}>
                     {b.bookingStatus}

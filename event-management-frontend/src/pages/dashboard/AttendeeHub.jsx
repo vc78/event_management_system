@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Calendar, Ticket, Compass, Tv, Award, ArrowRight, X } from 'lucide-react';
 import useAuth from '../../hooks/useAuth.js';
 import * as bookingApi from '../../api/bookingApi.js';
 import * as referralApi from '../../api/referralApi.js';
@@ -7,7 +8,6 @@ import { useToast } from '../../hooks/useToast.js';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import { formatCurrency } from '../../utils/formatCurrency.js';
 import { formatDate } from '../../utils/formatDate.js';
-import { Calendar, Ticket, Compass, Tv, Award, ArrowRight } from 'lucide-react';
 
 export default function AttendeeHub() {
   const { user } = useAuth();
@@ -16,6 +16,7 @@ export default function AttendeeHub() {
   const [bookings, setBookings] = useState([]);
   const [referral, setReferral] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   // Live clock
   const [timeStr, setTimeStr] = useState('');
@@ -99,17 +100,19 @@ export default function AttendeeHub() {
         
         {/* Booked Sessions */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>
-          <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '18px', textTransform: 'uppercase' }}>
-            Your Session Schedule
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '18px', textTransform: 'uppercase', margin: 0 }}>
+              Your Session Schedule
+            </h3>
+            <Link to="/">
+              <button className="cta text-xs" style={{ padding: '6px 12px' }}>Browse More Events</button>
+            </Link>
+          </div>
           
           <div className="stack" style={{ gap: '12px', maxHeight: '400px', overflowY: 'auto' }}>
             {activeBookings.length === 0 ? (
               <div className="text-center py-6">
                 <p className="muted text-sm">You haven't booked any sessions yet.</p>
-                <Link to="/" style={{ display: 'inline-block', marginTop: '10px' }}>
-                  <button className="cta">Browse Live Events</button>
-                </Link>
               </div>
             ) : (
               activeBookings.map(b => (
@@ -118,16 +121,78 @@ export default function AttendeeHub() {
                     <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 700 }}>{b.eventTitle}</h4>
                     <span className="muted text-xs">Date Booked: {formatDate(b.bookingTime)}</span>
                   </div>
-                  <Link to={`/events/${b.eventId}`}>
-                    <button className="btn-secondary text-xs" style={{ padding: '6px 12px' }}>
-                      View Details
-                    </button>
-                  </Link>
+                  <button className="btn-secondary text-xs" style={{ padding: '6px 12px' }} onClick={() => setSelectedBooking(b)}>
+                    View Details
+                  </button>
                 </div>
               ))
             )}
           </div>
         </div>
+
+        {/* Booking Details Modal */}
+        {selectedBooking && (
+          <div className="modal-overlay" onClick={() => setSelectedBooking(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: '12px', padding: '30px', maxWidth: '500px', width: '90%', position: 'relative' }}>
+              <button onClick={() => setSelectedBooking(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+              <h2 style={{ fontFamily: 'Anton', textTransform: 'uppercase', marginBottom: '20px', fontSize: '24px' }}>Booking Receipt</h2>
+              
+              <div style={{ background: 'var(--stage)', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{ background: 'var(--stage-2)', padding: '10px', display: 'inline-block', borderRadius: '8px', letterSpacing: '2px', fontFamily: 'IBM Plex Mono', fontSize: '20px', fontWeight: 'bold' }}>
+                    {selectedBooking.tokenId}
+                  </div>
+                  <div className="muted text-xs mt-2">Scan at the Check-In Gate</div>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <span className="muted text-xs">Event</span>
+                    <div style={{ fontWeight: 600 }}>{selectedBooking.eventTitle}</div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Venue</span>
+                    <div style={{ fontWeight: 600 }}>{selectedBooking.venueName || 'Main Arena'}</div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Date</span>
+                    <div style={{ fontWeight: 600 }}>{selectedBooking.eventDate ? formatDate(selectedBooking.eventDate) : 'TBD'}</div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Time</span>
+                    <div style={{ fontWeight: 600 }}>{selectedBooking.startTime ? selectedBooking.startTime : 'TBD'}</div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Tickets</span>
+                    <div style={{ fontWeight: 600 }}>{selectedBooking.numberOfTickets}</div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Total Amount</span>
+                    <div style={{ fontWeight: 600, color: 'var(--magenta)' }}>{formatCurrency(selectedBooking.totalAmount)}</div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Status</span>
+                    <div>
+                      <span className={`status-chip ${selectedBooking.bookingStatus?.toLowerCase()}`}>
+                        {selectedBooking.bookingStatus}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="muted text-xs">Payment</span>
+                    <div style={{ fontWeight: 600 }}>{selectedBooking.paymentStatus}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="muted text-sm text-center">
+                Please present this receipt or your Token ID at the venue entrance.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Action Console */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>

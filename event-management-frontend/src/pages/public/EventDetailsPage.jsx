@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import AppLogo from '../../components/common/AppLogo.jsx';
 import EventDetailsCard from '../../components/event/EventDetailsCard.jsx';
 import BookingForm from '../../components/forms/BookingForm.jsx';
@@ -8,6 +9,7 @@ import * as eventApi from '../../api/eventApi.js';
 import * as bookingApi from '../../api/bookingApi.js';
 import useAuth from '../../hooks/useAuth.js';
 import { useToast } from '../../hooks/useToast.js';
+import { useRealtimeEvent } from '../../hooks/useRealtime.js';
 
 export default function EventDetailsPage() {
   const { id } = useParams();
@@ -15,16 +17,14 @@ export default function EventDetailsPage() {
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
   
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    eventApi.getEventById(id)
-      .then(setEvent)
-      .catch(() => setEvent(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { data: event, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['events', id],
+    queryFn: () => eventApi.getEventById(id)
+  });
+
+  useRealtimeEvent(id);
 
   const handleBooking = async (payload) => {
     if (!isAuthenticated) {
@@ -50,6 +50,12 @@ export default function EventDetailsPage() {
   };
 
   if (loading) return <LoadingSpinner fullScreen label="Loading event details..." />;
+  if (isError) return (
+    <div className="center-screen" style={{ flexDirection: 'column', gap: '1rem' }}>
+      <p className="text-danger">Error loading event: {error?.message}</p>
+      <button onClick={() => refetch()} className="btn btn-primary">Retry</button>
+    </div>
+  );
   if (!event) return <div className="center-screen">Event not found</div>;
 
   return (

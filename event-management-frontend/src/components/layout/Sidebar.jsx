@@ -15,6 +15,7 @@ import AppLogo from '../common/AppLogo.jsx';
 import useAuth from '../../hooks/useAuth.js';
 
 const NAV_ITEMS = [
+  { to: '/', label: 'Browse Events', icon: CalendarDays, end: true },
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/dashboard/events', label: 'Events Manager', icon: CalendarDays },
   { to: '/dashboard/venues', label: 'Venues Config', icon: MapPin },
@@ -31,6 +32,8 @@ export default function Sidebar() {
   
   // Filter navbar links dynamically by logging role
   const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (item.to === '/') return true; // Everyone can see Browse Events
+
     if (user?.role === 'ADMIN' || user?.role === 'ORGANIZER') {
       return true; // Admins/Organizers see all platform dashboards
     }

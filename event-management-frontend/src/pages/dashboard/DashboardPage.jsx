@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import * as eventApi from '../../api/eventApi.js';
 import * as bookingApi from '../../api/bookingApi.js';
 import * as categoryApi from '../../api/categoryApi.js';
@@ -10,6 +11,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import { useToast } from '../../hooks/useToast.js';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, Ticket, Tags, MapPin, DollarSign } from 'lucide-react';
+import { useRealtimeDashboard } from '../../hooks/useRealtime.js';
 
 // Sub-hubs for separate journeys
 import AttendeeHub from './AttendeeHub.jsx';
@@ -43,17 +45,6 @@ function CountUp({ end, duration = 1000, prefix = '', suffix = '' }) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const toast = useToast();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalEvents: 0,
-    totalBookings: 0,
-    totalCategories: 0,
-    totalVenues: 0,
-    totalRevenue: 0,
-    confirmedBookings: 0,
-    cancelledBookings: 0
-  });
 
   // Ticking Clock state
   const [timeStr, setTimeStr] = useState('');
@@ -70,12 +61,20 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const loadStats = async () => {
-    setLoading(true);
-    try {
+  const { data: stats = {
+    totalUsers: 0,
+    totalEvents: 0,
+    totalBookings: 0,
+    totalCategories: 0,
+    totalVenues: 0,
+    totalRevenue: 0,
+    confirmedBookings: 0,
+    cancelledBookings: 0
+  }, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['admin', 'dashboard'],
+    queryFn: async () => {
       if (user?.role === 'ADMIN') {
-        const data = await adminApi.getDashboardStats();
-        setStats(data);
+        return adminApi.getDashboardStats();
       } else {
         const [events, bookings, categories, venues] = await Promise.all([
           eventApi.getEvents().catch(() => []),
@@ -91,7 +90,7 @@ export default function DashboardPage() {
         const confirmedBookings = bookings.filter(b => b.bookingStatus === 'CONFIRMED').length;
         const cancelledBookings = bookings.filter(b => b.bookingStatus === 'CANCELLED').length;
 
-        setStats({
+        return {
           totalUsers: new Set(bookings.map(b => b.userId)).size || 1,
           totalEvents: events.length,
           totalBookings: bookings.length,
@@ -100,22 +99,13 @@ export default function DashboardPage() {
           totalRevenue,
           confirmedBookings,
           cancelledBookings
-        });
+        };
       }
-    } catch (err) {
-      toast.error('Failed to load dashboard metrics');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    enabled: user?.role === 'ADMIN' || user?.role === 'ORGANIZER'
+  });
 
-  useEffect(() => {
-    if (user?.role === 'ADMIN' || user?.role === 'ORGANIZER') {
-      loadStats();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+  useRealtimeDashboard();
 
   // DYNAMIC APP PORTALS BASED ON LOGGED-IN ROLE
   if (user?.role === 'USER') {
@@ -127,6 +117,12 @@ export default function DashboardPage() {
   }
 
   if (loading) return <LoadingSpinner label="Retrieving system analytics..." />;
+  if (isError) return (
+    <div className="center-screen" style={{ flexDirection: 'column', gap: '1rem' }}>
+      <p className="text-danger">Failed to load dashboard metrics: {error?.message}</p>
+      <button onClick={() => refetch()} className="btn btn-primary">Retry</button>
+    </div>
+  );
 
   // Calculate check-in rate
   const checkInRate = stats.totalBookings > 0 

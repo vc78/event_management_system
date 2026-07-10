@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import AppLogo from '../../components/common/AppLogo.jsx';
 import GradientButton from '../../components/common/GradientButton.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
@@ -8,11 +9,10 @@ import EventCard from '../../components/event/EventCard.jsx';
 import Marquee from '../../components/common/Marquee.jsx';
 import * as eventApi from '../../api/eventApi.js';
 import useAuth from '../../hooks/useAuth.js';
+import { useRealtimeEventsList } from '../../hooks/useRealtime.js';
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuth();
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
 
   // Clock state
@@ -31,12 +31,15 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    eventApi.getEvents()
-      .then(setEvents)
-      .catch(() => setEvents([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: events = [], isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['events'],
+    queryFn: eventApi.getEvents
+  });
+
+  useRealtimeEventsList();
+
+  // Product Decision: CANCELLED events are left in the list but grayed out in EventCard 
+  // so users know they existed but can no longer be booked.
 
   // Filter logic
   const filteredEvents = useMemo(() => {
@@ -130,6 +133,11 @@ export default function HomePage() {
         <section style={{ paddingBottom: '80px' }}>
           {loading ? (
             <LoadingSpinner label="Querying event control room..." />
+          ) : isError ? (
+            <div className="center-screen" style={{ flexDirection: 'column', gap: '1rem' }}>
+              <p className="text-danger">Failed to load events: {error?.message}</p>
+              <button onClick={() => refetch()} className="btn btn-primary">Retry</button>
+            </div>
           ) : filteredEvents.length === 0 ? (
             <EmptyState 
               title="No events found" 

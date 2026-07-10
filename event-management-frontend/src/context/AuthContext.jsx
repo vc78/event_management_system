@@ -1,5 +1,6 @@
-import { createContext, useMemo, useState } from 'react';
+import { createContext, useMemo, useState, useEffect } from 'react';
 import * as authApi from '../api/authApi.js';
+import { socketService } from '../realtime/socket.js';
 export const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('ems_user') || 'null'));
@@ -8,7 +9,15 @@ export function AuthProvider({ children }) {
   const normalize = (d) => ({ id:d.id, email:d.email, fullName:d.fullName, role:d.role });
   const login = async (payload) => { setIsLoading(true); try { const d=await authApi.login(payload); const u=normalize(d); localStorage.setItem('ems_token', d.token); localStorage.setItem('ems_user', JSON.stringify(u)); setToken(d.token); setUser(u); return u; } finally { setIsLoading(false);} };
   const register = async (payload) => { setIsLoading(true); try { const d=await authApi.register(payload); const u=normalize(d); localStorage.setItem('ems_token', d.token); localStorage.setItem('ems_user', JSON.stringify(u)); setToken(d.token); setUser(u); return u; } finally { setIsLoading(false);} };
-  const logout = () => { localStorage.removeItem('ems_token'); localStorage.removeItem('ems_user'); setToken(null); setUser(null); };
+  const logout = () => { localStorage.removeItem('ems_token'); localStorage.removeItem('ems_user'); setToken(null); setUser(null); socketService.disconnect(); };
+  
+  useEffect(() => {
+    socketService.connect(token);
+    return () => {
+      // Don't disconnect on unmount, we want the socket to stay alive across page navigations
+    };
+  }, [token]);
+
   const value = useMemo(()=>({user, token, isAuthenticated:!!token, isLoading, login, register, logout}),[user,token,isLoading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

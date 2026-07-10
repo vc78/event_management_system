@@ -54,8 +54,12 @@ export default function CheckInConsole() {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     
-    const numId = Number(searchQuery.trim());
-    const match = bookings.find(b => b.id === numId || b.userEmail?.toLowerCase() === searchQuery.trim().toLowerCase());
+    const searchStr = searchQuery.trim().toLowerCase();
+    const match = bookings.find(b => 
+      b.id.toString() === searchStr || 
+      b.tokenId?.toLowerCase() === searchStr ||
+      b.userEmail?.toLowerCase() === searchStr
+    );
     
     if (match) {
       setSelectedBooking(match);
@@ -147,7 +151,7 @@ export default function CheckInConsole() {
             <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
               <input 
                 className="input-field" 
-                placeholder="e.g. Ticket ID or name@ems.com" 
+                placeholder="e.g. Ticket ID, Token ID, or name@ems.com" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -224,7 +228,7 @@ export default function CheckInConsole() {
                   {checkedInSet.has(selectedBooking.id) ? 'CHECKED IN' : 'VALID TICKET'}
                 </span>
                 
-                <span className="eyebrow" style={{ color: 'var(--magenta)' }}>Ticket ID #{selectedBooking.id}</span>
+                <span className="eyebrow" style={{ color: 'var(--magenta)' }}>Ticket ID #{selectedBooking.id} {selectedBooking.tokenId ? `| Token: ${selectedBooking.tokenId}` : ''}</span>
                 <h2 style={{ fontFamily: 'Anton', fontSize: '28px', textTransform: 'uppercase', margin: '8px 0 16px 0', color: 'var(--ink)' }}>
                   {selectedBooking.userName || 'Attendee'}
                 </h2>

@@ -18,4 +18,12 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByCategoryId(Long categoryId);
 
     List<Event> findByVenueId(Long venueId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Event e SET e.availableSeats = e.availableSeats - :tickets WHERE e.id = :eventId AND e.availableSeats >= :tickets")
+    int decrementSeatsIfAvailable(Long eventId, Integer tickets);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Event e SET e.availableSeats = e.availableSeats + :tickets WHERE e.id = :eventId AND (e.availableSeats + :tickets) <= e.totalSeats")
+    int incrementSeats(Long eventId, Integer tickets);
 }
