@@ -38,3 +38,12 @@ event-management-frontend/dist/
 event-management-frontend/.env
 event-management-frontend/.env.local
 event-management-frontend/.env.*.local
+
+### Secrets and local configs ###
+.env
+.env.local
+.env.development.local
+.env.production.local
+application-prod.properties
+*secrets*
+
