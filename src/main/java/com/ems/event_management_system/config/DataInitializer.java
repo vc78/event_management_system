@@ -11,6 +11,7 @@ import com.ems.event_management_system.repository.SponsorBoothRepository;
 import com.ems.event_management_system.repository.ReferralLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
