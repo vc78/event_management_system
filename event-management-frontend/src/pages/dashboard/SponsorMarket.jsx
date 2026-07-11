@@ -115,7 +115,7 @@ export default function SponsorMarket() {
         
         {/* Left Column: Self-Serve Sponsorship Booking */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>
-          <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '20px', textTransform: 'uppercase' }}>
+          <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '20px', textTransform: 'uppercase' }}>
             Sponsor Booth Marketplace
           </h3>
           <p className="muted mb-6">Select and book premium spaces in the exhibition hall directly.</p>
@@ -169,7 +169,7 @@ export default function SponsorMarket() {
 
         {/* Right Column: Affiliate Program & Link Tracking */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>
-          <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '20px', textTransform: 'uppercase' }}>
+          <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '20px', textTransform: 'uppercase' }}>
             Attendee Referral Program
           </h3>
           <p className="muted mb-6">Share your custom affiliate link and earn a 10% commission on every ticket sold.</p>

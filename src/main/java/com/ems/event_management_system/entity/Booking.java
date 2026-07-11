@@ -39,6 +39,10 @@ public class Booking extends BaseEntity {
     @Column(name = "payment_status")
     private String paymentStatus;
 
+    @Column(name = "checked_in", nullable = false)
+    @Builder.Default
+    private Boolean checkedIn = false;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

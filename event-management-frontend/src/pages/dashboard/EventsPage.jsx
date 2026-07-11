@@ -182,7 +182,8 @@ export default function EventsPage() {
         </div>
       </div>
 
-      <div className="table-wrap">
+      {/* D05: Desktop table — hidden on mobile */}
+      <div className="hidden-mobile table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -231,6 +232,37 @@ export default function EventsPage() {
         </table>
       </div>
 
+      {/* D05: Mobile card list — hidden on md+ */}
+      <div className="mobile-cards">
+        {events.map((e) => (
+          <div key={e.id} className="mobile-card">
+            <div className="mobile-card-header">
+              <div>
+                <div className="mobile-card-title" style={{ fontWeight: 700 }}>{e.eventTitle}</div>
+                <div className="mobile-card-sub">{e.eventDate} {e.startTime ? `· ${e.startTime}` : ''}</div>
+              </div>
+              <span className={`status-chip ${e.eventStatus?.toLowerCase() === 'published' ? 'confirmed' : 'pending'}`}>
+                {e.eventStatus}
+              </span>
+            </div>
+            <div className="mobile-card-body">
+              <span className="badge">{e.categoryName || 'Event'}</span>
+              <span style={{ color: 'var(--ash)', fontSize: 12 }}>📍 {e.venueName || 'TBA'}</span>
+              <span style={{ fontWeight: 600 }}>{formatCurrency(e.ticketPrice || 0)}</span>
+              <span style={{ color: 'var(--ash)', fontSize: 12 }}>{e.totalSeats - e.availableSeats}/{e.totalSeats} seats sold</span>
+            </div>
+            <div className="mobile-card-actions">
+              <button className="mobile-action-btn" onClick={() => openEditModal(e)}>
+                ✏️ Edit
+              </button>
+              <button className="mobile-action-btn danger" onClick={() => handleDelete(e.id)}>
+                🗑 Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -266,7 +298,7 @@ export default function EventsPage() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                   <div>
                     <label className="label-text">Category *</label>
                     <select
@@ -300,7 +332,7 @@ export default function EventsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
                   <div>
                     <label className="label-text">Event Date *</label>
                     <input
@@ -334,7 +366,7 @@ export default function EventsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                   <div>
                     <label className="label-text">Ticket Price *</label>
                     <input

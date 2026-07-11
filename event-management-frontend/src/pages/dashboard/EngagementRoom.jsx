@@ -240,7 +240,7 @@ export default function EngagementRoom() {
 
           {/* Q&A Board */}
           <div className="card p-6">
-            <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '20px', textTransform: 'uppercase' }}>
+            <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '20px', textTransform: 'uppercase' }}>
               Attendee Q&A Board
             </h3>
             
@@ -298,7 +298,7 @@ export default function EngagementRoom() {
           {/* Live Polling */}
           <div className="card p-6">
             <div className="flex row-between mb-4">
-              <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '20px', textTransform: 'uppercase', margin: 0 }}>
+              <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '20px', textTransform: 'uppercase', margin: 0 }}>
                 Live Session Polls
               </h3>
               <span className="badge live">Active</span>
@@ -399,7 +399,7 @@ export default function EngagementRoom() {
 
           {/* Sentiment Word Cloud */}
           <div className="card p-6">
-            <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '20px', textTransform: 'uppercase' }}>
+            <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '20px', textTransform: 'uppercase' }}>
               Sentiment Word Cloud
             </h3>
             
@@ -428,7 +428,7 @@ export default function EngagementRoom() {
                       fontSize: `${fontSize}px`, 
                       color: color, 
                       fontWeight: w.value > 20 ? 700 : 500,
-                      fontFamily: w.value > 25 ? 'Anton, sans-serif' : 'inherit',
+                      fontFamily: w.value > 25 ? 'Poppins, sans-serif' : 'inherit',
                       transition: 'font-size 0.3s ease',
                       cursor: 'pointer'
                     }}

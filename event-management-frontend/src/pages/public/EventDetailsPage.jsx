@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import AppLogo from '../../components/common/AppLogo.jsx';
 import EventDetailsCard from '../../components/event/EventDetailsCard.jsx';
 import BookingForm from '../../components/forms/BookingForm.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
@@ -60,24 +59,10 @@ export default function EventDetailsPage() {
 
   return (
     <div>
-      <header className="topbar">
-        <AppLogo />
-        <div className="flex gap-3">
-          <Link to="/" className="top-link align-center" style={{ display: 'flex', alignItems: 'center' }}>
-            Back to events
-          </Link>
-          {isAuthenticated ? (
-            <Link to="/my-bookings" className="top-link align-center" style={{ display: 'flex', alignItems: 'center', marginLeft: '12px' }}>
-              My bookings
-            </Link>
-          ) : null}
-        </div>
-      </header>
-      
+      {/* D09: Booking panel is DOM-first so mobile users see CTA immediately.
+              CSS order property restores visual order on lg+. */}
       <div className="container details-layout">
-        <EventDetailsCard event={event} />
-        
-        <div className="card p-6" style={{ height: 'fit-content' }}>
+        <div className="card p-6 details-booking-panel" style={{ height: 'fit-content' }}>
           <h2 className="section-title">Reserve your seat</h2>
           {event.availableSeats <= 0 ? (
             <div className="stat-card" style={{ border: '1px solid var(--danger)', background: 'rgba(239, 68, 68, 0.05)' }}>
@@ -85,20 +70,21 @@ export default function EventDetailsPage() {
               <span>All seats for this event are fully booked.</span>
             </div>
           ) : (
-            <BookingForm 
-              event={event} 
-              onSubmit={handleBooking} 
-              isSubmitting={submitting} 
+            <BookingForm
+              event={event}
+              onSubmit={handleBooking}
+              isSubmitting={submitting}
               currentUserId={user?.id || 0}
             />
           )}
-          
           {!isAuthenticated && (
             <p className="muted mt-4 text-xs text-center" style={{ textAlign: 'center' }}>
               You will be prompted to sign in before final checkout.
             </p>
           )}
         </div>
+
+        <EventDetailsCard event={event} />
       </div>
     </div>
   );

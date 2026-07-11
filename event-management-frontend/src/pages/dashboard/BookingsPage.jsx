@@ -66,7 +66,8 @@ export default function BookingsPage() {
         </button>
       </div>
 
-      <div className="table-wrap">
+      {/* D04: Desktop table — hidden on mobile */}
+      <div className="hidden-mobile table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -116,6 +117,40 @@ export default function BookingsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* D04: Mobile card list — shown only below md */}
+      <div className="mobile-cards">
+        {bookings.map((b) => (
+          <div key={b.id} className="mobile-card">
+            <div className="mobile-card-header">
+              <div>
+                <div className="mobile-card-title">{b.userName || `User #${b.userId}`}</div>
+                <div className="mobile-card-sub">{b.userEmail}</div>
+              </div>
+              <span className={`status-chip ${b.bookingStatus?.toLowerCase()}`}>{b.bookingStatus}</span>
+            </div>
+            <div className="mobile-card-body">
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{b.eventTitle}</span>
+              <span style={{ color: 'var(--ash)', fontSize: 12 }}>🎫 {b.numberOfTickets} seats · {formatCurrency(b.totalAmount || 0)}</span>
+              <span style={{ color: 'var(--ash)', fontSize: 12 }}>📅 {formatDate(b.bookingTime)}</span>
+              {b.tokenId && <code style={{ fontSize: 11, background: 'var(--stage-2)', padding: '2px 6px', borderRadius: 4, display: 'inline-block' }}>{b.tokenId}</code>}
+            </div>
+            <div className="mobile-card-actions">
+              {b.bookingStatus !== 'CANCELLED' && b.bookingStatus !== 'CANCELED' ? (
+                <button
+                  className="mobile-action-btn danger"
+                  style={{ width: '100%' }}
+                  onClick={() => handleCancelBooking(b.id)}
+                >
+                  Cancel Booking
+                </button>
+              ) : (
+                <span className="muted text-xs" style={{ padding: '10px 0', display: 'block', textAlign: 'center' }}>Booking Cancelled</span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

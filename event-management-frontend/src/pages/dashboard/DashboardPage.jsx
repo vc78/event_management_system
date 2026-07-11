@@ -182,7 +182,7 @@ export default function DashboardPage() {
 
       {/* Additional Analytics Card */}
       <div className="card p-6 mt-4">
-        <h3 className="section-title" style={{ marginBottom: '8px', fontFamily: 'Anton', fontSize: '20px' }}>
+        <h3 className="section-title" style={{ marginBottom: '8px', fontFamily: 'Poppins', fontSize: '20px' }}>
           Platform Booking Summary
         </h3>
         <p className="muted mb-6">Real-time telemetry and cancellation conversion ratios.</p>

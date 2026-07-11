@@ -18,4 +18,6 @@ public interface BookingService {
     List<BookingResponse> getBookingsByEvent(Long eventId);
 
     BookingResponse cancelBooking(Long bookingId);
+
+    BookingResponse checkInBooking(Long bookingId);
 }

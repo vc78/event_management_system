@@ -91,7 +91,7 @@ export default function VenueMap() {
         
         {/* Left Side: SVG Floor Map */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>
-          <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '18px', textTransform: 'uppercase', marginBottom: '14px' }}>
+          <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '18px', textTransform: 'uppercase', marginBottom: '14px' }}>
             Expo Floor Layout
           </h3>
           
@@ -109,7 +109,7 @@ export default function VenueMap() {
                 style={{ cursor: 'pointer' }}
               >
                 <rect x="40" y="40" width="220" height="150" fill="rgba(255, 255, 255, 0.02)" stroke="var(--line)" strokeWidth="2" rx="10" />
-                <text x="150" y="100" fill="var(--paper-dim)" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="Anton">STAGE 1</text>
+                <text x="150" y="100" fill="var(--paper-dim)" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="Poppins">STAGE 1</text>
                 <text x="150" y="125" fill="var(--ash)" fontSize="12" textAnchor="middle">Simulcast Feed</text>
                 
                 {/* Heatmap marker Stage 1 */}
@@ -123,7 +123,7 @@ export default function VenueMap() {
                 style={{ cursor: 'pointer' }}
               >
                 <rect x="40" y="310" width="220" height="150" fill="rgba(255, 255, 255, 0.02)" stroke="var(--line)" strokeWidth="2" rx="10" />
-                <text x="150" y="375" fill="var(--paper-dim)" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="Anton">STAGE 2</text>
+                <text x="150" y="375" fill="var(--paper-dim)" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="Poppins">STAGE 2</text>
                 <text x="150" y="400" fill="var(--ash)" fontSize="12" textAnchor="middle">Panel Discussions</text>
                 <circle cx="150" cy="340" r="8" fill="var(--success)" opacity="0.8" />
               </g>
@@ -134,7 +134,7 @@ export default function VenueMap() {
                 style={{ cursor: 'pointer' }}
               >
                 <rect x="540" y="40" width="220" height="150" fill="rgba(255, 255, 255, 0.02)" stroke="var(--line)" strokeWidth="2" rx="10" />
-                <text x="650" y="100" fill="var(--paper-dim)" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="Anton">VIP LOUNGE</text>
+                <text x="650" y="100" fill="var(--paper-dim)" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="Poppins">VIP LOUNGE</text>
                 <text x="650" y="125" fill="var(--ash)" fontSize="12" textAnchor="middle">Catering & Tap Swag</text>
                 
                 {/* Heatmap marker Lounge */}
@@ -221,7 +221,7 @@ export default function VenueMap() {
           {selectedBooth ? (
             <div className="card p-6" style={{ background: 'var(--stage-2)', border: '1px solid var(--line)', height: 'fit-content' }}>
               <span className="badge selling mb-3">{selectedBooth.tier} SPONSOR</span>
-              <h2 className="section-title" style={{ fontFamily: 'Anton', fontSize: '24px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <h2 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '24px', textTransform: 'uppercase', marginBottom: '6px' }}>
                 {selectedBooth.sponsorName}
               </h2>
               <p className="muted text-sm">Booth Space: <strong>{selectedBooth.boothNumber}</strong></p>

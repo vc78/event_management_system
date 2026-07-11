@@ -28,4 +28,5 @@ public class BookingResponse {
     private LocalDateTime bookingTime;
     private BookingStatus bookingStatus;
     private String paymentStatus;
+    private Boolean checkedIn;
 }

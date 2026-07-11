@@ -7,6 +7,7 @@ import com.ems.event_management_system.entity.Event;
 import com.ems.event_management_system.entity.User;
 import com.ems.event_management_system.enums.BookingStatus;
 import com.ems.event_management_system.exception.BadRequestException;
+import com.ems.event_management_system.exception.ForbiddenException;
 import com.ems.event_management_system.exception.ResourceNotFoundException;
 import com.ems.event_management_system.exception.SeatUnavailableException;
 import com.ems.event_management_system.repository.BookingRepository;
@@ -15,11 +16,16 @@ import com.ems.event_management_system.repository.UserRepository;
 import com.ems.event_management_system.service.BookingService;
 import com.ems.event_management_system.service.RealtimeEventPublisher;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +37,25 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final RealtimeEventPublisher realtimeEventPublisher;
+
+    // ── Helper: check if the current principal has ADMIN or ORGANIZER role ──
+    private boolean isAdminOrOrganizer() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
+        return authorities.stream().anyMatch(a ->
+                a.getAuthority().equals("ROLE_ADMIN") ||
+                a.getAuthority().equals("ROLE_ORGANIZER")
+        );
+    }
+
+    // ── Helper: resolve the User entity for the currently authenticated principal ──
+    private User resolveCallerUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+        String email = auth.getName();
+        return userRepository.findByEmail(email).orElse(null);
+    }
 
     @Override
     @Transactional
@@ -70,11 +95,11 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         Booking saved = bookingRepository.save(booking);
-        
+
         // Notify clients about seat change and booking change
         realtimeEventPublisher.publishEventStatusChange(event);
         realtimeEventPublisher.publishBookingChange(saved);
-        
+
         return mapToResponse(saved);
     }
 
@@ -82,11 +107,22 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
+
+        // D02b: Ownership check — only the booking owner OR admin/organizer can view
+        if (!isAdminOrOrganizer()) {
+            User caller = resolveCallerUser();
+            if (caller == null || !caller.getId().equals(booking.getUser().getId())) {
+                // Use ResourceNotFoundException to avoid confirming the booking exists
+                throw new ResourceNotFoundException("Booking not found with id: " + id);
+            }
+        }
+
         return mapToResponse(booking);
     }
 
     @Override
     public List<BookingResponse> getAllBookings() {
+        // Already restricted to ADMIN/ORGANIZER by SecurityConfig (D02a)
         return bookingRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
@@ -95,6 +131,16 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponse> getBookingsByUser(Long userId) {
+        // D02b: Ownership enforcement
+        // Admin and Organizer roles are allowed through unconditionally.
+        // A plain USER may only request their own userId.
+        if (!isAdminOrOrganizer()) {
+            User caller = resolveCallerUser();
+            if (caller == null || !caller.getId().equals(userId)) {
+                throw new ForbiddenException("Access denied: you can only view your own bookings");
+            }
+        }
+
         return bookingRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
@@ -103,6 +149,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponse> getBookingsByEvent(Long eventId) {
+        // Already restricted to ADMIN/ORGANIZER by SecurityConfig (D02a)
         return bookingRepository.findByEventId(eventId)
                 .stream()
                 .map(this::mapToResponse)
@@ -125,12 +172,39 @@ public class BookingServiceImpl implements BookingService {
         booking.setPaymentStatus("REFUNDED");
 
         Booking updated = bookingRepository.save(booking);
-        
+
         // Notify clients about seat change and booking change
         realtimeEventPublisher.publishEventStatusChange(booking.getEvent());
         realtimeEventPublisher.publishBookingChange(updated);
-        
+
         return mapToResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse checkInBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        if (booking.getBookingStatus() == BookingStatus.CANCELLED || booking.getBookingStatus() == BookingStatus.CANCELED) {
+            throw new BadRequestException("Booking is cancelled");
+        }
+
+        if (Boolean.TRUE.equals(booking.getCheckedIn())) {
+            throw new BadRequestException("Ticket is already checked in");
+        }
+
+        if (booking.getEvent().getEventDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Ticket has expired");
+        }
+
+        booking.setCheckedIn(true);
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify clients about booking change
+        realtimeEventPublisher.publishBookingChange(saved);
+
+        return mapToResponse(saved);
     }
 
     private BookingResponse mapToResponse(Booking booking) {
@@ -151,6 +225,7 @@ public class BookingServiceImpl implements BookingService {
                 .bookingTime(booking.getBookingTime())
                 .bookingStatus(booking.getBookingStatus())
                 .paymentStatus(booking.getPaymentStatus())
+                .checkedIn(booking.getCheckedIn())
                 .build();
     }
 }

@@ -101,7 +101,7 @@ export default function SponsorHub() {
             <div className="flex row-between">
               <div>
                 <span className="badge selling" style={{ marginBottom: '8px' }}>{b.tier} Partner</span>
-                <h2 style={{ fontFamily: 'Anton', fontSize: '24px', textTransform: 'uppercase', margin: 0, color: 'var(--paper)' }}>
+                <h2 style={{ fontFamily: 'Poppins', fontSize: '24px', textTransform: 'uppercase', margin: 0, color: 'var(--paper)' }}>
                   {b.sponsorName}
                 </h2>
                 <p className="muted text-sm mt-2" style={{ margin: 0 }}>Exhibition Space: <strong>Booth {b.boothNumber}</strong></p>

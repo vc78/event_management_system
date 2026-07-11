@@ -101,7 +101,7 @@ export default function AttendeeHub() {
         {/* Booked Sessions */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '18px', textTransform: 'uppercase', margin: 0 }}>
+            <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '18px', textTransform: 'uppercase', margin: 0 }}>
               Your Session Schedule
             </h3>
             <Link to="/">
@@ -137,7 +137,7 @@ export default function AttendeeHub() {
               <button onClick={() => setSelectedBooking(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer' }}>
                 <X size={24} />
               </button>
-              <h2 style={{ fontFamily: 'Anton', textTransform: 'uppercase', marginBottom: '20px', fontSize: '24px' }}>Booking Receipt</h2>
+              <h2 style={{ fontFamily: 'Poppins', textTransform: 'uppercase', marginBottom: '20px', fontSize: '24px' }}>Booking Receipt</h2>
               
               <div style={{ background: 'var(--stage)', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
                 <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -196,7 +196,7 @@ export default function AttendeeHub() {
 
         {/* Dynamic Action Console */}
         <div className="card p-6" style={{ background: 'var(--stage-2)' }}>
-          <h3 className="section-title" style={{ fontFamily: 'Anton', fontSize: '18px', textTransform: 'uppercase' }}>
+          <h3 className="section-title" style={{ fontFamily: 'Poppins', fontSize: '18px', textTransform: 'uppercase' }}>
             Attendee Fast-Link Hub
           </h3>
           

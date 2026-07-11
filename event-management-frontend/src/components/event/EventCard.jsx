@@ -100,8 +100,8 @@ export default function EventCard({ event }) {
         <h3 className="event-card-title">{event.eventTitle}</h3>
         
         <div className="event-card-meta">
-          <span><MapPin size={14} style={{ color: 'var(--amber)' }} /> {event.venueName || 'TBA'}</span>
-          <span><Calendar size={14} style={{ color: 'var(--amber)' }} /> {formatDate(event.eventDate)} • {event.startTime}</span>
+          <span><MapPin size={14} style={{ color: 'var(--secondary)' }} /> {event.venueName || 'TBA'}</span>
+          <span><Calendar size={14} style={{ color: 'var(--secondary)' }} /> {formatDate(event.eventDate)} • {event.startTime}</span>
         </div>
 
         {/* Capacity Progress Bar */}
@@ -126,7 +126,7 @@ export default function EventCard({ event }) {
           </div>
           
           <button className="btn-icon" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--line)', borderRadius: '50%', width: '38px', height: '38px' }}>
-            <ArrowRight size={16} style={{ color: 'var(--amber)' }} />
+            <ArrowRight size={16} style={{ color: 'var(--primary)' }} />
           </button>
         </div>
       </div>

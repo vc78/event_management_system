@@ -125,7 +125,8 @@ export default function VenuesPage() {
         </button>
       </div>
 
-      <div className="table-wrap">
+      {/* D06: Desktop table — hidden on mobile */}
+      <div className="hidden-mobile table-wrap">
         <table className="table">
           <thead>
             <tr>
@@ -167,6 +168,29 @@ export default function VenuesPage() {
         </table>
       </div>
 
+      {/* D06: Mobile card list — hidden on md+ */}
+      <div className="mobile-cards">
+        {venues.map((v) => (
+          <div key={v.id} className="mobile-card">
+            <div className="mobile-card-header">
+              <div>
+                <div className="mobile-card-title">{v.venueName}</div>
+                <div className="mobile-card-sub">{v.city}{v.stateName ? `, ${v.stateName}` : ''}, {v.country}</div>
+              </div>
+              <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 13 }}>{v.capacity} seats</span>
+            </div>
+            <div className="mobile-card-body">
+              <span style={{ color: 'var(--ash)', fontSize: 12 }}>📍 {v.address}</span>
+              {v.contactPerson && <span style={{ color: 'var(--ash)', fontSize: 12 }}>👤 {v.contactPerson} {v.contactPhone ? `· ${v.contactPhone}` : ''}</span>}
+            </div>
+            <div className="mobile-card-actions">
+              <button className="mobile-action-btn" onClick={() => openEditModal(v)}>✏️ Edit</button>
+              <button className="mobile-action-btn danger" onClick={() => handleDelete(v.id)}>🗑 Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -201,7 +225,7 @@ export default function VenuesPage() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
                   <div>
                     <label className="label-text">City *</label>
                     <input
@@ -234,7 +258,7 @@ export default function VenuesPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                   <div>
                     <label className="label-text">Max Seating Capacity *</label>
                     <input

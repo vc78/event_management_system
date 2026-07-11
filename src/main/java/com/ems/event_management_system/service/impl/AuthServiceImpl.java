@@ -64,6 +64,14 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    /**
+     * D04 GUARD: Do not add a userId parameter to this method (or to any
+     * "get current user" endpoint in AuthController) — the caller's identity
+     * MUST always be resolved strictly from the authenticated JWT principal,
+     * never from a value supplied by the client in the request URL or body.
+     * Adding such a parameter would allow one user to fetch another user's
+     * profile data by simply changing the id in the request.
+     */
     @Override
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
