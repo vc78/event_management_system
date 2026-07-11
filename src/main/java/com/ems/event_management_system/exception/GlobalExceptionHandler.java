@@ -1,5 +1,6 @@
 package com.ems.event_management_system.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -36,7 +38,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneralException(Exception ex) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        log.error("An unexpected error occurred", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
