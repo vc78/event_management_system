@@ -6,6 +6,7 @@ import com.ems.event_management_system.entity.Booking;
 import com.ems.event_management_system.entity.Event;
 import com.ems.event_management_system.entity.User;
 import com.ems.event_management_system.enums.BookingStatus;
+import com.ems.event_management_system.event.BookingCommittedEvent;
 import com.ems.event_management_system.exception.BadRequestException;
 import com.ems.event_management_system.exception.ForbiddenException;
 import com.ems.event_management_system.exception.ResourceNotFoundException;
@@ -14,8 +15,8 @@ import com.ems.event_management_system.repository.BookingRepository;
 import com.ems.event_management_system.repository.EventRepository;
 import com.ems.event_management_system.repository.UserRepository;
 import com.ems.event_management_system.service.BookingService;
-import com.ems.event_management_system.service.RealtimeEventPublisher;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,7 +37,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
-    private final RealtimeEventPublisher realtimeEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // ── Helper: check if the current principal has ADMIN or ORGANIZER role ──
     private boolean isAdminOrOrganizer() {
@@ -96,9 +97,8 @@ public class BookingServiceImpl implements BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // Notify clients about seat change and booking change
-        realtimeEventPublisher.publishEventStatusChange(event);
-        realtimeEventPublisher.publishBookingChange(saved);
+        // A6: Publish after-commit event so WS message is sent only when DB commit succeeds
+        applicationEventPublisher.publishEvent(new BookingCommittedEvent(this, saved, event));
 
         return mapToResponse(saved);
     }
@@ -173,9 +173,8 @@ public class BookingServiceImpl implements BookingService {
 
         Booking updated = bookingRepository.save(booking);
 
-        // Notify clients about seat change and booking change
-        realtimeEventPublisher.publishEventStatusChange(booking.getEvent());
-        realtimeEventPublisher.publishBookingChange(updated);
+        // A6: Publish after-commit event so WS message is sent only when DB commit succeeds
+        applicationEventPublisher.publishEvent(new BookingCommittedEvent(this, updated, booking.getEvent()));
 
         return mapToResponse(updated);
     }
@@ -186,7 +185,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
-        if (booking.getBookingStatus() == BookingStatus.CANCELLED || booking.getBookingStatus() == BookingStatus.CANCELED) {
+        if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
             throw new BadRequestException("Booking is cancelled");
         }
 
@@ -201,8 +200,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setCheckedIn(true);
         Booking saved = bookingRepository.save(booking);
 
-        // Notify clients about booking change
-        realtimeEventPublisher.publishBookingChange(saved);
+        // A6: Check-in has no seat change, so relatedEvent is null
+        applicationEventPublisher.publishEvent(new BookingCommittedEvent(this, saved, null));
 
         return mapToResponse(saved);
     }

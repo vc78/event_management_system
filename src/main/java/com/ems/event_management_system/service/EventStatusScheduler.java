@@ -2,8 +2,10 @@ package com.ems.event_management_system.service;
 
 import com.ems.event_management_system.entity.Event;
 import com.ems.event_management_system.enums.EventStatus;
+import com.ems.event_management_system.event.EventStatusChangedEvent;
 import com.ems.event_management_system.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,8 @@ import java.util.List;
 public class EventStatusScheduler {
 
     private final EventRepository eventRepository;
-    private final RealtimeEventPublisher realtimeEventPublisher;
+    // A6: Use ApplicationEventPublisher so WS messages are sent only after commit
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Scheduled(fixedRate = 60000)
     @Transactional
@@ -34,11 +37,12 @@ public class EventStatusScheduler {
             if (now.isAfter(endDateTime) || now.isEqual(endDateTime)) {
                 event.setEventStatus(EventStatus.COMPLETED);
                 eventRepository.save(event);
-                realtimeEventPublisher.publishEventStatusChange(event);
+                // A6: publish ApplicationEvent; listener sends WS only after commit
+                applicationEventPublisher.publishEvent(new EventStatusChangedEvent(this, event));
             } else if (now.isAfter(startDateTime) || now.isEqual(startDateTime)) {
                 event.setEventStatus(EventStatus.ONGOING);
                 eventRepository.save(event);
-                realtimeEventPublisher.publishEventStatusChange(event);
+                applicationEventPublisher.publishEvent(new EventStatusChangedEvent(this, event));
             }
         }
 
@@ -53,7 +57,7 @@ public class EventStatusScheduler {
             if (now.isAfter(endDateTime) || now.isEqual(endDateTime)) {
                 event.setEventStatus(EventStatus.COMPLETED);
                 eventRepository.save(event);
-                realtimeEventPublisher.publishEventStatusChange(event);
+                applicationEventPublisher.publishEvent(new EventStatusChangedEvent(this, event));
             }
         }
     }
