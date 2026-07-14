@@ -189,9 +189,11 @@ export default function MyBookingsPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   // Generate QR code when selected booking changes
+  // Encode tokenId (secure, opaque) — fall back to id string for legacy seed bookings
   useEffect(() => {
     if (selectedBooking && selectedBooking.bookingStatus === 'CONFIRMED') {
-      QRCode.toDataURL(selectedBooking.id.toString(), { width: 250, margin: 2 })
+      const qrPayload = selectedBooking.tokenId || selectedBooking.id.toString();
+      QRCode.toDataURL(qrPayload, { width: 250, margin: 2 })
         .then(url => setQrCodeUrl(url))
         .catch(err => console.error('Error generating QR code:', err));
     } else {

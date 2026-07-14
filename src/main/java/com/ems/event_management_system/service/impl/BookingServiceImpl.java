@@ -198,6 +198,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setCheckedIn(true);
+        booking.setCheckInTime(LocalDateTime.now());
         Booking saved = bookingRepository.save(booking);
 
         // A6: Check-in has no seat change, so relatedEvent is null
@@ -225,6 +226,7 @@ public class BookingServiceImpl implements BookingService {
                 .bookingStatus(booking.getBookingStatus())
                 .paymentStatus(booking.getPaymentStatus())
                 .checkedIn(booking.getCheckedIn())
+                .checkInTime(booking.getCheckInTime())
                 .build();
     }
 }

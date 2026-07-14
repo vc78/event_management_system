@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "bookings")
@@ -42,6 +43,9 @@ public class Booking extends BaseEntity {
     @Column(name = "checked_in", nullable = false)
     @Builder.Default
     private Boolean checkedIn = false;
+
+    @Column(name = "check_in_time")
+    private LocalDateTime checkInTime;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
