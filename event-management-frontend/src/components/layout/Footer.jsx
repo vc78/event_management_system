@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 
 const FEATURES = [
-  { icon: Zap,         label: 'Real-Time Websockets' },
-  { icon: CalendarDays,label: 'Instant Booking Engine' },
-  { icon: Ticket,      label: 'Digital Ticket QR' },
-  { icon: MapPin,      label: 'Live Venue Heatmaps' },
-  { icon: Tv,          label: 'HLS Stream Integration' },
+  { icon: Zap, label: 'Real-Time Websockets' },
+  { icon: CalendarDays, label: 'Instant Booking Engine' },
+  { icon: Ticket, label: 'Digital Ticket QR' },
+  { icon: MapPin, label: 'Live Venue Heatmaps' },
+  { icon: Tv, label: 'HLS Stream Integration' },
   { icon: ShieldCheck, label: 'GDPR-Compliant NFC' },
 ];
 
@@ -53,11 +53,11 @@ export default function Footer() {
           <div className="footer-links-col">
             <h4 className="footer-heading">Navigate</h4>
             <ul className="footer-list">
-              <li><Link to="/browse"       className="footer-link">Browse Events</Link></li>
-              <li><Link to="/my-bookings"  className="footer-link">My Bookings</Link></li>
-              <li><Link to="/dashboard"    className="footer-link">Control Dashboard</Link></li>
-              <li><Link to="/login"        className="footer-link">Sign In</Link></li>
-              <li><Link to="/register"     className="footer-link">Create Account</Link></li>
+              <li><Link to="/browse" className="footer-link">Browse Events</Link></li>
+              <li><Link to="/my-bookings" className="footer-link">My Bookings</Link></li>
+              <li><Link to="/dashboard" className="footer-link">Control Dashboard</Link></li>
+              <li><Link to="/login" className="footer-link">Sign In</Link></li>
+              <li><Link to="/register" className="footer-link">Create Account</Link></li>
             </ul>
           </div>
 
@@ -123,7 +123,7 @@ export default function Footer() {
             <span className="footer-legal-link">Cookie Policy</span>
           </div>
           <div className="footer-heart">
-            Crafted with <Heart size={12} className="heart-icon" /> by Antigravity
+            Developed with Precision by <strong>AIML ALPHA</strong> | Smart Event Management Solutions
           </div>
         </div>
       </div>
