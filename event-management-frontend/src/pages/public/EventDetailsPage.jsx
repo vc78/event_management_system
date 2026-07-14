@@ -15,12 +15,12 @@ export default function EventDetailsPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
-  
+
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: event, isLoading: loading, isError, error, refetch } = useQuery({
+  const { data: event, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['events', id],
-    queryFn: () => eventApi.getEventById(id)
+    queryFn: () => eventApi.getEventById(id),
   });
 
   useRealtimeEvent(id);
@@ -31,14 +31,9 @@ export default function EventDetailsPage() {
       navigate('/login', { state: { from: { pathname: `/events/${id}` } } });
       return;
     }
-    
     setSubmitting(true);
     try {
-      // Inject current user ID to ensure booking is created for the logged-in user
-      await bookingApi.createBooking({
-        ...payload,
-        userId: user.id
-      });
+      await bookingApi.createBooking({ ...payload, userId: user.id });
       toast.success('Tickets reserved successfully!');
       navigate('/my-bookings');
     } catch (err) {
@@ -48,43 +43,63 @@ export default function EventDetailsPage() {
     }
   };
 
-  if (loading) return <LoadingSpinner fullScreen label="Loading event details..." />;
+  if (isLoading) return <LoadingSpinner fullScreen label="Loading event details..." />;
+
   if (isError) return (
-    <div className="center-screen" style={{ flexDirection: 'column', gap: '1rem' }}>
-      <p className="text-danger">Error loading event: {error?.message}</p>
-      <button onClick={() => refetch()} className="btn btn-primary">Retry</button>
+    <div className="edp-error">
+      <p className="edp-error-msg">Failed to load event: {error?.message}</p>
+      <button onClick={() => refetch()} className="edp-retry-btn">Try Again</button>
     </div>
   );
-  if (!event) return <div className="center-screen">Event not found</div>;
+
+  if (!event) return (
+    <div className="edp-error">
+      <p className="edp-error-msg">Event not found.</p>
+      <button onClick={() => navigate('/')} className="edp-retry-btn">Go Home</button>
+    </div>
+  );
 
   return (
-    <div>
-      {/* D09: Booking panel is DOM-first so mobile users see CTA immediately.
-              CSS order property restores visual order on lg+. */}
-      <div className="container details-layout">
-        <div className="card p-6 details-booking-panel" style={{ height: 'fit-content' }}>
-          <h2 className="section-title">Reserve your seat</h2>
-          {event.availableSeats <= 0 ? (
-            <div className="stat-card" style={{ border: '1px solid var(--danger)', background: 'rgba(239, 68, 68, 0.05)' }}>
-              <strong style={{ color: 'var(--danger)' }}>SOLD OUT</strong>
-              <span>All seats for this event are fully booked.</span>
-            </div>
-          ) : (
-            <BookingForm
-              event={event}
-              onSubmit={handleBooking}
-              isSubmitting={submitting}
-              currentUserId={user?.id || 0}
-            />
-          )}
-          {!isAuthenticated && (
-            <p className="muted mt-4 text-xs text-center" style={{ textAlign: 'center' }}>
-              You will be prompted to sign in before final checkout.
-            </p>
-          )}
-        </div>
+    <div className="edp-root">
+      {/*
+        D09 layout note: booking panel is first in DOM for mobile scroll,
+        CSS `order` property swaps it visually to the right column on desktop.
+      */}
+      <div className="edp-layout">
 
-        <EventDetailsCard event={event} />
+        {/* ── Right: Booking panel (DOM-first) ── */}
+        <aside className="edp-booking-panel">
+          <div className="edp-booking-card">
+            <h2 className="edp-booking-heading">Reserve your seat</h2>
+
+            {(event.availableSeats ?? 0) <= 0 ? (
+              <div className="edp-soldout-card">
+                <span className="edp-soldout-icon">🎟️</span>
+                <strong>SOLD OUT</strong>
+                <p>All seats for this event are fully booked.</p>
+              </div>
+            ) : (
+              <BookingForm
+                event={event}
+                onSubmit={handleBooking}
+                isSubmitting={submitting}
+                currentUserId={user?.id || 0}
+              />
+            )}
+
+            {!isAuthenticated && (
+              <p className="edp-auth-hint">
+                You will be prompted to sign in before checkout.
+              </p>
+            )}
+          </div>
+        </aside>
+
+        {/* ── Left: Event details ── */}
+        <main className="edp-details">
+          <EventDetailsCard event={event} />
+        </main>
+
       </div>
     </div>
   );

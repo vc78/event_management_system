@@ -281,8 +281,66 @@ SELECT 'TKT-A002', 1, 199.00, NOW(), 'CONFIRMED', 'PAID',
     (SELECT id FROM events WHERE event_title = 'MRU Cultural Fest 2026');
 UPDATE events SET available_seats = available_seats - 1 WHERE event_title = 'MRU Cultural Fest 2026';
 
-INSERT INTO bookings (token_id, number_of_tickets, total_amount, booking_time, booking_status, payment_status, user_id, event_id)
-SELECT 'TKT-A003', 3, 2397.00, NOW(), 'PENDING', 'PENDING',
-    (SELECT id FROM users WHERE email = 'rahul@gmail.com'),
-    (SELECT id FROM events WHERE event_title = 'Hyderabad Music Night');
 UPDATE events SET available_seats = available_seats - 3 WHERE event_title = 'Hyderabad Music Night';
+
+-- ── PHASE 3 FEATURES DDL AND SEEDING ──
+
+ALTER TABLE events ADD COLUMN IF NOT EXISTS stream_url VARCHAR(255) DEFAULT NULL;
+ALTER TABLE session_qnas ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Set active live stream for tech conference
+UPDATE events 
+SET event_status = 'LIVE', 
+    stream_url = 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8' 
+WHERE event_title = 'Spring Boot Tech Conference 2026';
+
+-- Table zones
+CREATE TABLE IF NOT EXISTS zones (
+    zone_id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    capacity_threshold INT NOT NULL,
+    current_visitor_count INT NOT NULL DEFAULT 0,
+    total_dwell_seconds INT NOT NULL DEFAULT 0
+);
+
+-- Table zone_traffic_events
+CREATE TABLE IF NOT EXISTS zone_traffic_events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    zone_id VARCHAR(50) NOT NULL,
+    visitor_count INT NOT NULL,
+    dwell_seconds INT NOT NULL,
+    timestamp DATETIME NOT NULL
+);
+
+-- Table leads
+CREATE TABLE IF NOT EXISTS leads (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sponsor_id BIGINT NOT NULL,
+    attendee_id BIGINT NOT NULL,
+    consent_given BOOLEAN NOT NULL DEFAULT FALSE,
+    captured_at DATETIME,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+-- Table sentiment_words
+CREATE TABLE IF NOT EXISTS sentiment_words (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id BIGINT NOT NULL,
+    word VARCHAR(50) NOT NULL,
+    submitted_at DATETIME,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+-- Seed zones
+INSERT INTO zones (zone_id, name, capacity_threshold, current_visitor_count, total_dwell_seconds)
+VALUES 
+('stage1', 'Main Stage (Stage 1)', 100, 45, 12000),
+('stage2', 'Developer Workshop (Stage 2)', 50, 12, 4500),
+('lounge', 'VIP Lounge & Networking', 30, 28, 9800),
+('booth1', 'Premium Sponsor - Booth 1', 15, 8, 3200),
+('booth2', 'Tech Sponsor - Booth 2', 15, 4, 1800),
+('booth3', 'Cloud Sponsor - Booth 3', 15, 14, 4100)
+ON DUPLICATE KEY UPDATE name=VALUES(name), capacity_threshold=VALUES(capacity_threshold);
+

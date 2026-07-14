@@ -7,5 +7,5 @@ import java.util.List;
 
 @Repository
 public interface SessionQnaRepository extends JpaRepository<SessionQna, Long> {
-    List<SessionQna> findByEventIdOrderByUpvotesDesc(Long eventId);
+    List<SessionQna> findByEventIdOrderByIsPinnedDescUpvotesDesc(Long eventId);
 }

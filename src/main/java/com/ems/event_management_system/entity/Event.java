@@ -48,6 +48,9 @@ public class Event extends BaseEntity {
     @Column(name = "banner_url")
     private String bannerUrl;
 
+    @Column(name = "stream_url")
+    private String streamUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false)
     private EventStatus eventStatus;

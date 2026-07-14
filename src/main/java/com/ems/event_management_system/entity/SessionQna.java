@@ -30,4 +30,7 @@ public class SessionQna extends BaseEntity {
 
     @Column(name = "is_answered", nullable = false)
     private Boolean isAnswered = false;
+
+    @Column(name = "is_pinned", nullable = false)
+    private Boolean isPinned = false;
 }

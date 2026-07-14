@@ -9,6 +9,7 @@ import LiveEventsCarousel from '../../components/common/LiveEventsCarousel.jsx';
 import * as eventApi from '../../api/eventApi.js';
 import { useRealtimeEventsList } from '../../hooks/useRealtime.js';
 import useAuth from '../../hooks/useAuth.js';
+import HeroVideoCarousel from '../../components/common/HeroVideoCarousel.jsx';
 
 /* ── Flip Clock digit ───────────────────────────────────────────── */
 function FlipDigit({ value, label }) {
@@ -123,6 +124,7 @@ export default function HomePage() {
 
       {/* ── Hero ────────────────────────────────────────────────── */}
       <section className="hp-hero">
+        <HeroVideoCarousel />
         {/* Eyebrow */}
         <div className="hp-eyebrow">
           <span className="hp-eyebrow-dot" />
@@ -148,7 +150,16 @@ export default function HomePage() {
 
         {/* CTA Row */}
         <div className="hp-cta-row">
-          <Link to={isAuthenticated ? '/dashboard/events' : '/login'} className="hp-btn-primary">
+          <Link
+            to="/browse"
+            className="hp-btn-primary"
+            onClick={(e) => {
+              if (window.location.pathname === '/browse') {
+                e.preventDefault();
+                document.getElementById('carousel-anchor')?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <span className="hp-btn-shine" />
             🎟️ Book Your Event
           </Link>

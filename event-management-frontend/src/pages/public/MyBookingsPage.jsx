@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, Search, Calendar, Download } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
@@ -11,6 +11,37 @@ import { formatCurrency } from '../../utils/formatCurrency.js';
 import { formatDate } from '../../utils/formatDate.js';
 import { useRealtimeBookings } from '../../hooks/useRealtime.js';
 import QRCode from 'qrcode';
+
+/* ── ICS calendar file generator ────────────────────────────── */
+function generateICS(b) {
+  const now = new Date();
+  const fmtDt = (d) => d?.replace(/-/g, '') ?? '00000000';
+  const fmtTime = (t) => (t ?? '000000').replace(/:/g, '').slice(0, 6);
+  const uid = `booking-${b.id}@eventzaa.app`;
+  const dtNow = now.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const dtStart = `${fmtDt(b.eventDate)}T${fmtTime(b.startTime)}00`;
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//EVENTzaa//EN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dtNow}`,
+    `DTSTART:${dtStart}`,
+    `SUMMARY:${b.eventTitle ?? 'Event'}`,
+    `DESCRIPTION:Token ID: ${b.tokenId ?? b.id} | Tickets: ${b.numberOfTickets}`,
+    `LOCATION:${b.venueName ?? 'Venue TBD'}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `eventzaa-${b.id}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /* ── Status badge helper ─────────────────────────────────────── */
 const STATUS_META = {
@@ -35,7 +66,7 @@ function StatusChip({ status }) {
 }
 
 /* ── Booking Card ────────────────────────────────────────────── */
-function BookingCard({ booking: b, onViewDetails, onCancel }) {
+function BookingCard({ booking: b, onViewDetails, onCancel, onAddToCalendar }) {
   const isCancelled = b.bookingStatus === 'CANCELLED' || b.bookingStatus === 'CANCELED';
 
   return (
@@ -90,6 +121,15 @@ function BookingCard({ booking: b, onViewDetails, onCancel }) {
           <button className="bk-btn-view" onClick={() => onViewDetails(b)}>
             View Details
           </button>
+          {!isCancelled && b.eventDate && (
+            <button
+              className="bk-btn-ics"
+              onClick={() => onAddToCalendar(b)}
+              title="Add to Calendar"
+            >
+              <Calendar size={13} /> .ics
+            </button>
+          )}
           {!isCancelled ? (
             <button className="bk-btn-cancel" onClick={() => onCancel(b.id)}>
               Cancel
@@ -228,6 +268,10 @@ export default function MyBookingsPage() {
     }
   };
 
+  /* Filter + search state */
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
   /* Stats derived from bookings */
   const confirmedCount = bookings.filter(b => b.bookingStatus === 'CONFIRMED').length;
   const totalSpent = bookings
@@ -236,6 +280,34 @@ export default function MyBookingsPage() {
   const ticketsCount = bookings
     .filter(b => b.bookingStatus !== 'CANCELLED')
     .reduce((s, b) => s + (b.numberOfTickets || 0), 0);
+
+  /* Filtered + searched bookings */
+  const displayedBookings = useMemo(() => {
+    const now = new Date();
+    return bookings.filter(b => {
+      const isCancelled = b.bookingStatus === 'CANCELLED' || b.bookingStatus === 'CANCELED';
+      const isPast = b.eventDate ? new Date(b.eventDate) < now : false;
+      if (activeTab === 'upcoming' && (isCancelled || isPast)) return false;
+      if (activeTab === 'past'     && (isCancelled || !isPast)) return false;
+      if (activeTab === 'cancelled' && !isCancelled)            return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          b.eventTitle?.toLowerCase().includes(q) ||
+          b.venueName?.toLowerCase().includes(q)  ||
+          b.tokenId?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [bookings, activeTab, searchQuery]);
+
+  const TABS = [
+    { id: 'all',       label: 'All' },
+    { id: 'upcoming',  label: 'Upcoming' },
+    { id: 'past',      label: 'Past' },
+    { id: 'cancelled', label: 'Cancelled' },
+  ];
 
 
   return (
@@ -279,6 +351,53 @@ export default function MyBookingsPage() {
           )}
         </div>
 
+        {/* Filter toolbar */}
+        {!loading && !isError && bookings.length > 0 && (
+          <div className="bk-toolbar">
+            {/* Tabs */}
+            <div className="bk-tabs" role="tablist">
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  role="tab"
+                  aria-selected={activeTab === t.id}
+                  className={`bk-tab${activeTab === t.id ? ' bk-tab--active' : ''}`}
+                  onClick={() => setActiveTab(t.id)}
+                >
+                  {t.label}
+                  <span className="bk-tab-count">
+                    {bookings.filter(b => {
+                      const now = new Date();
+                      const isCancelled = b.bookingStatus === 'CANCELLED' || b.bookingStatus === 'CANCELED';
+                      const isPast = b.eventDate ? new Date(b.eventDate) < now : false;
+                      if (t.id === 'upcoming')  return !isCancelled && !isPast;
+                      if (t.id === 'past')      return !isCancelled && isPast;
+                      if (t.id === 'cancelled') return isCancelled;
+                      return true;
+                    }).length}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {/* Search */}
+            <div className="bk-search-wrap">
+              <Search size={15} className="bk-search-icon" />
+              <input
+                className="bk-search-input"
+                type="text"
+                placeholder="Search events, venues…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button className="bk-search-clear" onClick={() => setSearchQuery('')} aria-label="Clear">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         {loading ? (
           <LoadingSpinner label="Retrieving your bookings..." />
@@ -290,16 +409,19 @@ export default function MyBookingsPage() {
         ) : bookings.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, paddingTop: 60 }}>
             <EmptyState title="No bookings yet" description="Reserve a seat at an event and it will appear here." />
-            <Link to="/" className="hp-btn-primary">🎟️ Explore Events</Link>
+            <Link to="/browse" className="hp-btn-primary">🎟️ Explore Events</Link>
           </div>
+        ) : displayedBookings.length === 0 ? (
+          <EmptyState title="No bookings found" description="Try a different filter or search term." />
         ) : (
           <div className="bk-grid">
-            {bookings.map(b => (
+            {displayedBookings.map(b => (
               <BookingCard
                 key={b.id}
                 booking={b}
                 onViewDetails={setSelectedBooking}
                 onCancel={handleCancelBooking}
+                onAddToCalendar={generateICS}
               />
             ))}
           </div>

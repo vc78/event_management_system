@@ -5,6 +5,7 @@ import * as eventApi from '../../api/eventApi.js';
 import { useToast } from '../../hooks/useToast.js';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
+import { socketService } from '../../realtime/socket.js';
 import { Send, ThumbsUp, Check, Play, Award, BarChart2 } from 'lucide-react';
 
 export default function EngagementRoom() {
@@ -15,11 +16,13 @@ export default function EngagementRoom() {
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [attendingCount, setAttendingCount] = useState(1);
   
   // Data lists
   const [polls, setPolls] = useState([]);
   const [qnas, setQnas] = useState([]);
   const [userVotedPolls, setUserVotedPolls] = useState(new Set());
+  const [pollResults, setPollResults] = useState({}); // pollId -> { option: count }
   
   // Form states
   const [newQuestion, setNewQuestion] = useState('');
@@ -27,15 +30,7 @@ export default function EngagementRoom() {
   const [pollOptions, setPollOptions] = useState(['', '']);
   
   // Word cloud states
-  const [words, setWords] = useState([
-    { text: 'Insightful', value: 24 },
-    { text: 'Inspiring', value: 18 },
-    { text: 'Innovative', value: 32 },
-    { text: 'Fast-paced', value: 10 },
-    { text: 'Bespoke', value: 15 },
-    { text: 'Engaging', value: 28 },
-    { text: 'Educational', value: 20 }
-  ]);
+  const [words, setWords] = useState([]);
   const [newWord, setNewWord] = useState('');
 
   // Fetch initial events
@@ -44,12 +39,16 @@ export default function EngagementRoom() {
       .then(data => {
         setEvents(data);
         if (data.length > 0) {
-          setSelectedEventId(data[0].id);
+          setSelectedEventId(data[0].id.toString());
         }
       })
       .catch(() => setEvents([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const selectedEvent = useMemo(() => {
+    return events.find(ev => ev.id.toString() === selectedEventId.toString());
+  }, [events, selectedEventId]);
 
   // Fetch engagement telemetry for selected event
   const fetchEngagementData = async () => {
@@ -61,15 +60,122 @@ export default function EngagementRoom() {
       ]);
       setPolls(p);
       setQnas(q);
+      
+      // Fetch results for all polls
+      p.forEach(poll => fetchPollResults(poll.id));
     } catch (err) {
       toast.error('Failed to load engagement records');
     }
   };
 
+  const fetchPollResults = async (pollId) => {
+    try {
+      const votes = await engagementApi.getPollResults(pollId);
+      const counts = {};
+      votes.forEach(v => {
+        counts[v.selectedOption] = (counts[v.selectedOption] || 0) + 1;
+      });
+      setPollResults(prev => ({ ...prev, [pollId]: counts }));
+    } catch (err) {}
+  };
+
+  // HLS stream support via dynamic script loading
   useEffect(() => {
-    if (selectedEventId) {
-      fetchEngagementData();
+    if (selectedEvent?.streamUrl && selectedEvent.streamUrl.endsWith('.m3u8')) {
+      const video = document.getElementById('live-stream-player');
+      if (video) {
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = selectedEvent.streamUrl;
+        } else if (window.Hls) {
+          const hls = new window.Hls();
+          hls.loadSource(selectedEvent.streamUrl);
+          hls.attachMedia(video);
+        } else {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+          script.onload = () => {
+            if (window.Hls) {
+              const hls = new window.Hls();
+              hls.loadSource(selectedEvent.streamUrl);
+              hls.attachMedia(video);
+            }
+          };
+          document.body.appendChild(script);
+        }
+      }
     }
+  }, [selectedEvent?.streamUrl]);
+
+  // WebSockets Subscriptions
+  useEffect(() => {
+    if (!selectedEventId) return;
+
+    fetchEngagementData();
+    
+    // Fetch initial word cloud
+    engagementApi.getWordCloud(selectedEventId)
+      .then(data => {
+        const formatted = data.map(item => ({ text: item.text, value: Number(item.count) * 4 }));
+        setWords(formatted);
+      })
+      .catch(() => {});
+
+    // Subscribe to events via SocketService
+    const unsubRoom = socketService.subscribe(`/topic/engagement/${selectedEventId}/room`, () => {});
+    
+    const unsubAttending = socketService.subscribe(`/topic/engagement/${selectedEventId}/attending`, (payload) => {
+      if (payload && typeof payload.count === 'number') {
+        setAttendingCount(payload.count > 0 ? payload.count : 1);
+      }
+    });
+
+    const unsubPolls = socketService.subscribe(`/topic/engagement/${selectedEventId}/polls`, (updatedPoll) => {
+      fetchPollResults(updatedPoll.id);
+      setPolls(prev => {
+        const idx = prev.findIndex(p => p.id === updatedPoll.id);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = updatedPoll;
+          return next;
+        }
+        return [updatedPoll, ...prev];
+      });
+    });
+
+    const unsubQnas = socketService.subscribe(`/topic/engagement/${selectedEventId}/qnas`, (payload) => {
+      if (payload && payload.deletedId) {
+        setQnas(prev => prev.filter(q => q.id !== payload.deletedId));
+      } else {
+        setQnas(prev => {
+          const idx = prev.findIndex(q => q.id === payload.id);
+          let nextList = [];
+          if (idx !== -1) {
+            const next = [...prev];
+            next[idx] = payload;
+            nextList = next;
+          } else {
+            nextList = [payload, ...prev];
+          }
+          return nextList.sort((a, b) => {
+            if (a.isPinned !== b.isPinned) return b.isPinned ? -1 : 1;
+            return b.upvotes - a.upvotes;
+          });
+        });
+      }
+    });
+
+    const unsubWords = socketService.subscribe(`/topic/engagement/${selectedEventId}/words`, (aggregatedList) => {
+      const formatted = aggregatedList.map(item => ({ text: item.text, value: Number(item.count) * 4 }));
+      setWords(formatted);
+    });
+
+    return () => {
+      unsubRoom();
+      unsubAttending();
+      unsubPolls();
+      unsubQnas();
+      unsubWords();
+    };
   }, [selectedEventId]);
 
   // Submit Q&A Question
@@ -85,7 +191,6 @@ export default function EngagementRoom() {
       });
       setNewQuestion('');
       toast.success('Question posted to board');
-      fetchEngagementData();
     } catch (err) {
       toast.error('Failed to post question');
     } finally {
@@ -97,20 +202,39 @@ export default function EngagementRoom() {
   const handleUpvote = async (qnaId) => {
     try {
       await engagementApi.upvoteQna(qnaId);
-      fetchEngagementData();
     } catch (err) {
       toast.error('Could not register vote');
     }
   };
 
-  // Answer Question (Host/Speaker Action)
+  // Answer Question
   const handleAnswerQuestion = async (qnaId) => {
     try {
       await engagementApi.answerQna(qnaId);
       toast.success('Question marked as answered');
-      fetchEngagementData();
     } catch (err) {
       toast.error('Could not mark as answered');
+    }
+  };
+
+  // Pin Question
+  const handlePinQuestion = async (qnaId) => {
+    try {
+      await engagementApi.pinQna(qnaId);
+      toast.success('Pin status toggled');
+    } catch (err) {
+      toast.error('Failed to toggle pin');
+    }
+  };
+
+  // Delete Question
+  const handleDeleteQuestion = async (qnaId) => {
+    if (!window.confirm('Delete this question permanently?')) return;
+    try {
+      await engagementApi.deleteQna(qnaId);
+      toast.success('Question removed');
+    } catch (err) {
+      toast.error('Failed to delete question');
     }
   };
 
@@ -128,13 +252,12 @@ export default function EngagementRoom() {
       });
       setUserVotedPolls(prev => new Set([...prev, pollId]));
       toast.success('Vote recorded');
-      fetchEngagementData();
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Vote failed');
     }
   };
 
-  // Create Poll (Speaker/Admin Action)
+  // Create Poll
   const handleCreatePoll = async (e) => {
     e.preventDefault();
     const filteredOptions = pollOptions.filter(o => o.trim() !== '');
@@ -153,7 +276,6 @@ export default function EngagementRoom() {
       setNewPollQuestion('');
       setPollOptions(['', '']);
       toast.success('New poll published');
-      fetchEngagementData();
     } catch (err) {
       toast.error('Failed to create poll');
     } finally {
@@ -166,28 +288,30 @@ export default function EngagementRoom() {
     try {
       await engagementApi.closePoll(pollId);
       toast.success('Poll closed');
-      fetchEngagementData();
     } catch (err) {
       toast.error('Failed to close poll');
     }
   };
 
   // Word Cloud submit
-  const handleAddWord = (e) => {
+  const handleAddWord = async (e) => {
     e.preventDefault();
     if (!newWord.trim()) return;
-    const wordClean = newWord.trim().substring(0, 15);
-    setWords(prev => {
-      const idx = prev.findIndex(w => w.text.toLowerCase() === wordClean.toLowerCase());
-      if (idx !== -1) {
-        const updated = [...prev];
-        updated[idx].value += 5;
-        return updated;
-      }
-      return [...prev, { text: wordClean, value: 8 }];
-    });
-    setNewWord('');
-    toast.success('Keyword added to cloud');
+    const cleanWord = newWord.trim();
+    if (cleanWord.includes(' ') || cleanWord.length > 15) {
+      toast.error('Submit a single word (no spaces) under 15 characters.');
+      return;
+    }
+    try {
+      await engagementApi.submitWord({
+        eventId: selectedEventId,
+        word: cleanWord
+      });
+      setNewWord('');
+      toast.success('Keyword added to cloud');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Word submission failed');
+    }
   };
 
   if (loading) return <LoadingSpinner label="Entering session feed..." />;
@@ -218,24 +342,38 @@ export default function EngagementRoom() {
 
       <div className="two-col-grid" style={{ marginTop: '20px' }}>
         
-        {/* Left Side: Mock Video & Q&A */}
+        {/* Left Side: Video Player & Q&A */}
         <div className="stack">
-          {/* Mock Video Stream */}
+          {/* Real-time Video Stream Container */}
           <div className="card overflow-hidden" style={{ position: 'relative', background: '#000', borderRadius: '24px', aspectRatio: '16/9' }}>
-            <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
-              <div className="avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 0 30px rgba(255,184,77,0.3)' }}>
-                <Play size={32} style={{ marginLeft: '4px' }} />
+            {selectedEvent?.streamUrl ? (
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <video
+                  id="live-stream-player"
+                  src={selectedEvent.streamUrl}
+                  controls
+                  autoPlay
+                  muted
+                  playsInline
+                  poster="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&auto=format&fit=crop&q=60"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <span className="badge live" style={{ position: 'absolute', top: '20px', left: '20px', background: '#EF4444' }}>
+                  🔴 LIVE
+                </span>
+                <span className="clock" style={{ position: 'absolute', bottom: '20px', right: '20px', color: '#fff', background: 'rgba(0,0,0,0.65)', padding: '4px 10px', borderRadius: '4px' }}>
+                  LIVE • {attendingCount} Attending
+                </span>
               </div>
-              <span className="badge live" style={{ position: 'absolute', top: '20px', left: '20px' }}>Simulcast Feed</span>
-              <span className="clock" style={{ position: 'absolute', bottom: '20px', right: '20px', color: '#fff' }}>
-                LIVE • 248 Attending
-              </span>
-            </div>
-            <img 
-              src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&auto=format&fit=crop&q=60&ixlib=rb-4.0.3" 
-              alt="Stream placeholder" 
-              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, pointerEvents: 'none' }}
-            />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: '#111', color: 'var(--ash)', textAlign: 'center', padding: '20px' }}>
+                <div>
+                  <p style={{ fontSize: '32px', margin: '0 0 10px 0' }}>📺</p>
+                  <p style={{ fontWeight: 600, color: '#fff', margin: '0 0 5px 0' }}>No live feed configured</p>
+                  <p className="text-xs muted" style={{ margin: 0 }}>Choose a session with an active video stream</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Q&A Board */}
@@ -261,9 +399,12 @@ export default function EngagementRoom() {
                 <p className="muted text-sm text-center py-6">No questions posted yet. Be the first to ask!</p>
               ) : (
                 qnas.map(q => (
-                  <div key={q.id} className="stat-card" style={{ background: q.isAnswered ? 'rgba(16, 185, 129, 0.05)' : 'var(--stage-2)', border: '1px solid var(--line)', flexDirection: 'row', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={q.id} className="stat-card" style={{ background: q.isAnswered ? 'rgba(16, 185, 129, 0.05)' : 'var(--stage-2)', border: q.isPinned ? '1px solid var(--amber)' : '1px solid var(--line)', flexDirection: 'row', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ flex: 1, marginRight: '16px' }}>
-                      <p className="text-sm" style={{ margin: 0, fontWeight: 500 }}>{q.questionText}</p>
+                      <p className="text-sm" style={{ margin: 0, fontWeight: 500 }}>
+                        {q.isPinned && <span style={{ marginRight: '6px' }}>📌</span>}
+                        {q.questionText}
+                      </p>
                       <div className="flex gap-3 mt-2 text-xs muted" style={{ alignItems: 'center' }}>
                         <span>▲ {q.upvotes} upvotes</span>
                         {q.isAnswered && (
@@ -274,16 +415,37 @@ export default function EngagementRoom() {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" style={{ alignItems: 'center' }}>
                       {!q.isAnswered && (
                         <button className="btn-icon" onClick={() => handleUpvote(q.id)} title="Upvote question">
                           <ThumbsUp size={16} />
                         </button>
                       )}
-                      {(user?.role === 'ADMIN' || user?.role === 'ORGANIZER') && !q.isAnswered && (
-                        <button className="btn-icon" onClick={() => handleAnswerQuestion(q.id)} title="Mark as Answered" style={{ color: 'var(--success)' }}>
-                          <Check size={16} />
-                        </button>
+                      
+                      {(user?.role === 'ADMIN' || user?.role === 'ORGANIZER') && (
+                        <>
+                          <button 
+                            className="btn-icon" 
+                            onClick={() => handlePinQuestion(q.id)} 
+                            title={q.isPinned ? 'Unpin question' : 'Pin question'}
+                            style={{ color: q.isPinned ? 'var(--amber)' : 'var(--ash)' }}
+                          >
+                            📌
+                          </button>
+                          {!q.isAnswered && (
+                            <button className="btn-icon" onClick={() => handleAnswerQuestion(q.id)} title="Mark as Answered" style={{ color: 'var(--success)' }}>
+                              <Check size={16} />
+                            </button>
+                          )}
+                          <button 
+                            className="btn-icon" 
+                            onClick={() => handleDeleteQuestion(q.id)} 
+                            title="Delete question" 
+                            style={{ color: '#EF4444' }}
+                          >
+                            🗑️
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -363,22 +525,52 @@ export default function EngagementRoom() {
                       <p className="text-sm font-semibold mb-3">{p.question}</p>
                       
                       <div className="stack" style={{ gap: '8px' }}>
-                        {opts.map(opt => (
-                          <button 
-                            key={opt}
-                            className={`select-field text-left flex row-between`}
-                            style={{ 
-                              background: hasVoted ? 'rgba(255,255,255,0.02)' : 'var(--stage-2)', 
-                              cursor: hasVoted || !p.isActive ? 'default' : 'pointer',
-                              border: '1px solid var(--line)',
-                              padding: '10px 14px'
-                            }}
-                            onClick={() => p.isActive && handleVotePoll(p.id, opt)}
-                          >
-                            <span>{opt}</span>
-                            {!hasVoted && p.isActive && <span className="muted text-xs">Vote</span>}
-                          </button>
-                        ))}
+                        {opts.map(opt => {
+                          const votes = pollResults[p.id] || {};
+                          const count = votes[opt] || 0;
+                          const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
+                          const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                          
+                          return (
+                            <div key={opt} style={{ position: 'relative', width: '100%' }}>
+                              <button 
+                                className={`select-field text-left flex row-between`}
+                                style={{ 
+                                  background: 'transparent',
+                                  position: 'relative',
+                                  zIndex: 2,
+                                  cursor: hasVoted || !p.isActive ? 'default' : 'pointer',
+                                  border: '1px solid var(--line)',
+                                  padding: '10px 14px',
+                                  width: '100%'
+                                }}
+                                onClick={() => p.isActive && handleVotePoll(p.id, opt)}
+                              >
+                                <span style={{ fontWeight: 500 }}>{opt}</span>
+                                <span className="muted text-xs">
+                                  {hasVoted || !p.isActive ? `${count} votes (${percent}%)` : 'Vote'}
+                                </span>
+                              </button>
+                              
+                              {(hasVoted || !p.isActive) && (
+                                <div 
+                                  style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    bottom: 0,
+                                    width: `${percent}%`,
+                                    background: 'rgba(79, 70, 229, 0.15)',
+                                    transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    borderRadius: '12px',
+                                    pointerEvents: 'none',
+                                    zIndex: 1
+                                  }} 
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {/* Organizer Close Poll */}
@@ -416,31 +608,34 @@ export default function EngagementRoom() {
             </form>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px', justifyContent: 'center', alignItems: 'center', background: 'var(--stage)', padding: '20px', borderRadius: '16px', border: '1px solid var(--line)' }}>
-              {words.map((w) => {
-                // Map values to font sizes
-                const fontSize = Math.min(32, Math.max(12, 10 + w.value / 2));
-                const color = w.value > 25 ? 'var(--amber)' : (w.value > 15 ? 'var(--paper)' : 'var(--ash)');
-                
-                return (
-                  <span 
-                    key={w.text} 
-                    style={{ 
-                      fontSize: `${fontSize}px`, 
-                      color: color, 
-                      fontWeight: w.value > 20 ? 700 : 500,
-                      fontFamily: w.value > 25 ? 'Poppins, sans-serif' : 'inherit',
-                      transition: 'font-size 0.3s ease',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => {
-                      setNewWord(w.text);
-                      toast.info(`Voted word: "${w.text}"`);
-                    }}
-                  >
-                    {w.text}
-                  </span>
-                );
-              })}
+              {words.length === 0 ? (
+                <p className="muted text-xs">No feedback keywords submitted yet.</p>
+              ) : (
+                words.map((w) => {
+                  const fontSize = Math.min(32, Math.max(12, 10 + w.value / 2));
+                  const color = w.value > 25 ? 'var(--amber)' : (w.value > 15 ? 'var(--paper)' : 'var(--ash)');
+                  
+                  return (
+                    <span 
+                      key={w.text} 
+                      style={{ 
+                        fontSize: `${fontSize}px`, 
+                        color: color, 
+                        fontWeight: w.value > 20 ? 700 : 500,
+                        fontFamily: w.value > 25 ? 'Poppins, sans-serif' : 'inherit',
+                        transition: 'font-size 0.3s ease',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        setNewWord(w.text);
+                        toast.info(`Feedback keyword: "${w.text}"`);
+                      }}
+                    >
+                      {w.text}
+                    </span>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
