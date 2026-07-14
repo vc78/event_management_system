@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar.jsx';
+import Footer from './Footer.jsx';
 
 /**
  * D07: DashboardLayout
- * - Lifts mobileOpen state here (was local to Topbar, but Topbar didn't exist)
- * - Closes drawer automatically on every route change via useEffect on location.pathname
- * - Hamburger button lives in this layout's topbar strip at [BP: base/sm/md]
+ * - Lifts mobileOpen state here
+ * - Closes drawer automatically on every route change
+ * - Renders consistent Footer at the bottom of the dashboard main content
  */
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  // D07 FIX: Close drawer on every route change
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -54,8 +54,12 @@ export default function DashboardLayout() {
         <Sidebar onNavClick={() => setMobileOpen(false)} />
       </div>
 
-      <main className="dashboard-main">
-        <Outlet />
+      {/* Main Content Area */}
+      <main className="dashboard-main" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <div style={{ flex: 1, paddingBottom: '40px' }}>
+          <Outlet />
+        </div>
+        <Footer />
       </main>
     </div>
   );

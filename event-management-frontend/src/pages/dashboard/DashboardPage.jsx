@@ -187,7 +187,7 @@ export default function DashboardPage() {
         </h3>
         <p className="muted mb-6">Real-time telemetry and cancellation conversion ratios.</p>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+        <div className="three-col-grid" style={{ marginTop: '20px' }}>
           <div className="stat-card" style={{ borderLeft: '4px solid var(--success)', background: 'var(--stage)' }}>
             <strong style={{ fontSize: '24px' }}>{stats.confirmedBookings}</strong>
             <span className="muted">Confirmed Seats</span>

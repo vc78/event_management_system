@@ -6,19 +6,20 @@
  * Provides:
  *  - PublicHeader at the top (logo + nav + logout)
  *  - Outlet renders each page's specific content below
- *
- * NOTE: Individual pages that previously had their own full-page
- * `min-h-screen` wrappers should keep them — they sit INSIDE the Outlet
- * so they don't double-wrap the header.
+ *  - Beautiful, consistent Footer component at the bottom
  */
 import { Outlet } from 'react-router-dom';
 import PublicHeader from './PublicHeader.jsx';
+import Footer from './Footer.jsx';
 
 export default function PublicLayout() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--stage)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--stage)' }}>
       <PublicHeader />
-      <Outlet />
+      <div style={{ flex: 1 }}>
+        <Outlet />
+      </div>
+      <Footer />
     </div>
   );
 }

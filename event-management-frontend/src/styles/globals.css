@@ -6203,3 +6203,394 @@ html, body, #root {
   }
 }
 
+
+/* ================================================================
+   APP FOOTER — PUBLIC + DASHBOARD PANELS
+   Premium glassmorphism footer with telemetry indicators
+   ================================================================ */
+
+.app-footer {
+  position: relative;
+  margin-top: auto;
+  background: rgba(10, 12, 28, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+/* Atmospheric glow blob */
+.footer-glow {
+  position: absolute;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 200px;
+  background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.footer-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 24px 0;
+}
+
+/* 4-column grid */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1.2fr 1.3fr;
+  gap: 40px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 1100px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .footer-brand-col {
+    grid-column: 1 / -1;
+  }
+}
+
+
+@media (max-width: 540px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .footer-brand-col {
+    grid-column: auto;
+  }
+  .footer-wrap {
+    padding: 40px 20px 0;
+  }
+}
+
+/* ── Brand column ── */
+.footer-brand-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.footer-desc {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--ash);
+  max-width: 320px;
+  margin: 0;
+}
+
+.footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.footer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ash);
+  transition: all 0.22s ease;
+  text-decoration: none;
+}
+
+.footer-social-link:hover {
+  background: rgba(79, 70, 229, 0.15);
+  border-color: rgba(79, 70, 229, 0.4);
+  color: #a5b4fc;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
+}
+
+/* ── Navigation links column ── */
+.footer-links-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.footer-heading {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ash);
+  text-decoration: none;
+  transition: color 0.18s ease, gap 0.18s ease;
+  padding: 4px 0;
+}
+
+.footer-link::before {
+  content: '›';
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.footer-link:hover {
+  color: var(--paper);
+  gap: 10px;
+}
+
+.footer-link:hover::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Telemetry / Status column ── */
+.footer-status-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.footer-status-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.status-indicator {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-indicator--live {
+  background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: pulseGreen 2s ease-in-out infinite;
+}
+
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08); }
+}
+
+.status-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #34D399;
+}
+
+.status-label {
+  font-size: 11px;
+  color: var(--ash);
+  flex-shrink: 0;
+}
+
+.status-val {
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.text-success { color: #34D399; }
+.text-amber   { color: var(--amber); }
+.font-semibold { font-weight: 600; }
+
+/* ── Bottom bar ── */
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0 24px;
+  flex-wrap: wrap;
+}
+
+.footer-copyright {
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.6);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+.footer-heart {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.heart-icon {
+  color: #f43f5e;
+  animation: heartbeat 1.6s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14%       { transform: scale(1.3); }
+  28%       { transform: scale(1); }
+  42%       { transform: scale(1.2); }
+  70%       { transform: scale(1); }
+}
+
+@media (max-width: 540px) {
+  .footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+}
+
+/* ── Features column ── */
+.footer-features-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.footer-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: var(--ash);
+  padding: 4px 0;
+  transition: color 0.18s ease;
+}
+
+.footer-feature-item:hover {
+  color: var(--paper);
+}
+
+.footer-feature-icon {
+  color: var(--indigo);
+  flex-shrink: 0;
+}
+
+/* ── Status divider ── */
+.footer-status-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 6px 0;
+}
+
+/* ── Tech stack badges ── */
+.footer-tech-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.footer-tech-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #a5b4fc;
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  white-space: nowrap;
+}
+
+/* ── Legal links in bottom bar ── */
+.footer-legal-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-legal-link {
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.45);
+  cursor: default;
+  transition: color 0.18s ease;
+}
+
+.footer-legal-link:hover {
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.footer-legal-sep {
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.2);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .footer-legal-links {
+    display: none; /* Tuck away on small phones — too cramped */
+  }
+  .footer-tech-badges {
+    gap: 4px;
+  }
+}
+
+/* ── Dashboard footer variant — tighter padding ── */
+.dashboard-main .app-footer {
+  background: rgba(10, 12, 28, 0.82);
+}
+
+.dashboard-main .footer-wrap {
+  padding-top: 40px;
+}
+
+/* mt-3 utility if not already defined */
+.mt-3 { margin-top: 12px; }
+
