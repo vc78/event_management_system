@@ -93,9 +93,11 @@ public class SecurityConfig {
                         // the D01/D02 additions above — matcher order is load-bearing.)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // ── Guest booking creation: keep permitAll so unauthenticated users
-                        // can book. Remove if you require login-before-booking.
-                        .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
+                        // ── Razorpay Payment integration ──────────────────────────────
+                        // Webhook is called directly by Razorpay (no JWT auth needed)
+                        .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                        // Order creation and verification require user authentication
+                        .requestMatchers(HttpMethod.POST, "/api/payments/create-order", "/api/payments/verify").authenticated()
 
                         // ── Cancel a booking: must be logged in (ownership checked in service)
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/cancel/**").authenticated()

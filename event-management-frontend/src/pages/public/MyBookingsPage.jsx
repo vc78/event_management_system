@@ -68,9 +68,14 @@ function StatusChip({ status }) {
 /* ── Booking Card ────────────────────────────────────────────── */
 function BookingCard({ booking: b, onViewDetails, onCancel, onAddToCalendar }) {
   const isCancelled = b.bookingStatus === 'CANCELLED' || b.bookingStatus === 'CANCELED';
+  const isPending = b.bookingStatus === 'PENDING';
 
   return (
-    <div className="bk-card" style={{ opacity: isCancelled ? 0.65 : 1 }}>
+    <div className="bk-card" style={{
+      opacity: isCancelled ? 0.65 : 1,
+      border: isPending ? '1.5px dashed #F59E0B' : '1px solid var(--line)',
+      boxShadow: isPending ? '0 0 10px rgba(245, 158, 11, 0.1)' : 'none'
+    }}>
       {/* Image header */}
       <div className="bk-card-img">
         <img
@@ -121,7 +126,7 @@ function BookingCard({ booking: b, onViewDetails, onCancel, onAddToCalendar }) {
           <button className="bk-btn-view" onClick={() => onViewDetails(b)}>
             View Details
           </button>
-          {!isCancelled && b.eventDate && (
+          {b.bookingStatus === 'CONFIRMED' && b.eventDate && (
             <button
               className="bk-btn-ics"
               onClick={() => onAddToCalendar(b)}

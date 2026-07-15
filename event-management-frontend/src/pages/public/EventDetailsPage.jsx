@@ -6,6 +6,7 @@ import BookingForm from '../../components/forms/BookingForm.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import * as eventApi from '../../api/eventApi.js';
 import * as bookingApi from '../../api/bookingApi.js';
+import * as paymentApi from '../../api/paymentApi.js';
 import useAuth from '../../hooks/useAuth.js';
 import { useToast } from '../../hooks/useToast.js';
 import { useRealtimeEvent } from '../../hooks/useRealtime.js';
@@ -33,11 +34,51 @@ export default function EventDetailsPage() {
     }
     setSubmitting(true);
     try {
-      await bookingApi.createBooking({ ...payload, userId: user.id });
-      toast.success('Tickets reserved successfully!');
-      navigate('/my-bookings');
+      const response = await paymentApi.createOrder({ ...payload, userId: user.id });
+
+      const options = {
+        key: response.razorpayKeyId,
+        amount: response.amount,
+        currency: response.currency,
+        order_id: response.razorpayOrderId,
+        name: 'EVENTzaa',
+        description: `Booking for ${event?.eventTitle || 'Event'}`,
+        handler: async (rzpResponse) => {
+          setSubmitting(true);
+          try {
+            await paymentApi.verifyPayment({
+              bookingId: response.bookingId,
+              razorpay_order_id: rzpResponse.razorpay_order_id,
+              razorpay_payment_id: rzpResponse.razorpay_payment_id,
+              razorpay_signature: rzpResponse.razorpay_signature,
+            });
+            toast.success('Payment successful & tickets reserved!');
+            navigate('/my-bookings');
+          } catch (err) {
+            toast.error(err?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            toast.warning('Payment was cancelled. You can review pending bookings in My Bookings.');
+            navigate('/my-bookings');
+          },
+        },
+        prefill: {
+          name: user?.fullName || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#4F46E5',
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Could not complete booking');
+      toast.error(err?.response?.data?.message || 'Could not initiate booking payment');
     } finally {
       setSubmitting(false);
     }

@@ -76,14 +76,8 @@ export function useRealtimeBookings(userId) {
                 toast(`Your booking #${payload.bookingId} has been cancelled by an administrator.`, { icon: 'ℹ️' });
             }
 
-            queryClient.setQueryData(['bookings', 'mine'], (oldData) => {
-                if (!oldData || !Array.isArray(oldData)) return oldData;
-                return oldData.map(booking => 
-                    booking.id === payload.bookingId 
-                        ? { ...booking, bookingStatus: payload.status }
-                        : booking
-                );
-            });
+            // Invalidate query to pull the fresh token, paymentStatus, and bookingStatus details
+            queryClient.invalidateQueries(['bookings', 'mine']);
         });
 
         return () => {

@@ -21,8 +21,15 @@ public class EventResponse {
     private Integer totalSeats;
     private Integer availableSeats;
     private String bannerUrl;
+    private String streamUrl;
     private EventStatus eventStatus;
+    // Denormalised name fields (read display)
     private String categoryName;
     private String venueName;
     private String organizerName;
+    // Raw ID fields – required so the edit-form dropdowns can pre-select the
+    // correct option (category select uses categoryId, venue select uses venueId)
+    private Long categoryId;
+    private Long venueId;
+    private Long organizerId;
 }

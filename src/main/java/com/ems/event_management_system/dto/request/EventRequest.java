@@ -37,6 +37,8 @@ public class EventRequest {
 
     private String bannerUrl;
 
+    private String streamUrl;
+
     @NotNull(message = "Event status is required")
     private EventStatus eventStatus;
 

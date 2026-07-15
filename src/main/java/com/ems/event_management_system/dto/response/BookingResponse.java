@@ -1,6 +1,7 @@
 package com.ems.event_management_system.dto.response;
 
 import com.ems.event_management_system.enums.BookingStatus;
+import com.ems.event_management_system.enums.PaymentStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -27,7 +28,7 @@ public class BookingResponse {
     private BigDecimal totalAmount;
     private LocalDateTime bookingTime;
     private BookingStatus bookingStatus;
-    private String paymentStatus;
+    private PaymentStatus paymentStatus;
     private Boolean checkedIn;
     private LocalDateTime checkInTime;
 }

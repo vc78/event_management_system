@@ -29,6 +29,7 @@ export default function EventsPage() {
     ticketPrice: '',
     totalSeats: '',
     bannerUrl: '',
+    streamUrl: '',
     eventStatus: 'PUBLISHED',
     categoryId: '',
     venueId: '',
@@ -65,6 +66,7 @@ export default function EventsPage() {
       ticketPrice: '',
       totalSeats: '',
       bannerUrl: '',
+      streamUrl: '',
       eventStatus: 'PUBLISHED',
       categoryId: categories[0]?.id || '',
       venueId: venues[0]?.id || '',
@@ -84,6 +86,7 @@ export default function EventsPage() {
       ticketPrice: event.ticketPrice || '',
       totalSeats: event.totalSeats || '',
       bannerUrl: event.bannerUrl || '',
+      streamUrl: event.streamUrl || '',
       eventStatus: event.eventStatus || 'PUBLISHED',
       categoryId: event.categoryId || '',
       venueId: event.venueId || '',
@@ -402,6 +405,16 @@ export default function EventsPage() {
                     value={form.bannerUrl}
                     onChange={(e) => setForm({ ...form, bannerUrl: e.target.value })}
                     placeholder="https://images.unsplash.com/..."
+                  />
+                </div>
+
+                <div>
+                  <label className="label-text">Live Stream URL <span className="muted" style={{fontWeight:400,fontSize:'0.8em'}}>(optional — used by Engagement Room)</span></label>
+                  <input
+                    className="input-field"
+                    value={form.streamUrl}
+                    onChange={(e) => setForm({ ...form, streamUrl: e.target.value })}
+                    placeholder="https://live.example.com/stream/abc123"
                   />
                 </div>
 

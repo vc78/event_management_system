@@ -1,6 +1,7 @@
 package com.ems.event_management_system.entity;
 
 import com.ems.event_management_system.enums.BookingStatus;
+import com.ems.event_management_system.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,8 +38,18 @@ public class Booking extends BaseEntity {
     @Column(name = "booking_status", nullable = false)
     private BookingStatus bookingStatus;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
-    private String paymentStatus;
+    private PaymentStatus paymentStatus;
+
+    @Column(name = "razorpay_order_id")
+    private String razorpayOrderId;
+
+    @Column(name = "razorpay_payment_id")
+    private String razorpayPaymentId;
+
+    @Column(name = "razorpay_signature")
+    private String razorpaySignature;
 
     @Column(name = "checked_in", nullable = false)
     @Builder.Default

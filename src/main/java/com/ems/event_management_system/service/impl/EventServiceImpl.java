@@ -51,6 +51,7 @@ public class EventServiceImpl implements EventService {
                 .totalSeats(request.getTotalSeats())
                 .availableSeats(request.getTotalSeats())
                 .bannerUrl(request.getBannerUrl())
+                .streamUrl(request.getStreamUrl())
                 .eventStatus(request.getEventStatus())
                 .category(category)
                 .venue(venue)
@@ -101,6 +102,7 @@ public class EventServiceImpl implements EventService {
         event.setTicketPrice(request.getTicketPrice());
         event.setTotalSeats(request.getTotalSeats());
         event.setBannerUrl(request.getBannerUrl());
+        event.setStreamUrl(request.getStreamUrl());
         event.setEventStatus(request.getEventStatus());
         event.setCategory(category);
         event.setVenue(venue);
@@ -169,10 +171,16 @@ public class EventServiceImpl implements EventService {
                 .totalSeats(event.getTotalSeats())
                 .availableSeats(event.getAvailableSeats())
                 .bannerUrl(event.getBannerUrl())
+                .streamUrl(event.getStreamUrl())
                 .eventStatus(event.getEventStatus())
+                // Denormalised display names
                 .categoryName(event.getCategory() != null ? event.getCategory().getCategoryName() : null)
                 .venueName(event.getVenue() != null ? event.getVenue().getVenueName() : null)
                 .organizerName(event.getOrganizer() != null ? event.getOrganizer().getFullName() : null)
+                // Raw IDs for edit-form dropdown pre-selection
+                .categoryId(event.getCategory() != null ? event.getCategory().getId() : null)
+                .venueId(event.getVenue() != null ? event.getVenue().getId() : null)
+                .organizerId(event.getOrganizer() != null ? event.getOrganizer().getId() : null)
                 .build();
     }
-}
+}

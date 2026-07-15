@@ -6,9 +6,11 @@ import com.ems.event_management_system.entity.Booking;
 import com.ems.event_management_system.entity.Event;
 import com.ems.event_management_system.entity.User;
 import com.ems.event_management_system.enums.BookingStatus;
+import com.ems.event_management_system.enums.PaymentStatus;
 import com.ems.event_management_system.event.BookingCommittedEvent;
 import com.ems.event_management_system.exception.BadRequestException;
 import com.ems.event_management_system.exception.ForbiddenException;
+import com.razorpay.RazorpayClient;
 import com.ems.event_management_system.exception.ResourceNotFoundException;
 import com.ems.event_management_system.exception.SeatUnavailableException;
 import com.ems.event_management_system.repository.BookingRepository;
@@ -38,6 +40,7 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final RazorpayClient razorpayClient;
 
     // ── Helper: check if the current principal has ADMIN or ORGANIZER role ──
     private boolean isAdminOrOrganizer() {
@@ -92,7 +95,7 @@ public class BookingServiceImpl implements BookingService {
                 .totalAmount(totalAmount)
                 .bookingTime(LocalDateTime.now())
                 .bookingStatus(BookingStatus.CONFIRMED)
-                .paymentStatus("PAID")
+                .paymentStatus(PaymentStatus.PAID)
                 .build();
 
         Booking saved = bookingRepository.save(booking);
@@ -166,10 +169,20 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("Booking is already cancelled");
         }
 
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+            try {
+                org.json.JSONObject refundRequest = new org.json.JSONObject();
+                refundRequest.put("payment_id", booking.getRazorpayPaymentId());
+                razorpayClient.refunds.create(refundRequest);
+            } catch (Exception e) {
+                throw new BadRequestException("Failed to process refund via Razorpay: " + e.getMessage());
+            }
+        }
+
         eventRepository.incrementSeats(booking.getEvent().getId(), booking.getNumberOfTickets());
 
         booking.setBookingStatus(BookingStatus.CANCELLED);
-        booking.setPaymentStatus("REFUNDED");
+        booking.setPaymentStatus(PaymentStatus.REFUNDED);
 
         Booking updated = bookingRepository.save(booking);
 
